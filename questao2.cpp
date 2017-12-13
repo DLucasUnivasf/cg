@@ -17,17 +17,20 @@ void CircleMidPoint(int xc, int yc, int r, int c)
 {
     float x1 = 0,
           y1 = r;
-    int p = 1 - r;
+    int p = 1 - r, i=0;
     PlotPoint(xc, yc, x1, y1, c);
 
     while (x1 < y1)
     {
         x1++;
         if (p<0) p=p+2*x1+1;
-        else p=p+2*x1+1-2*y1;
+        else
+        {
+            y1--;
+            p=p+2*x1+1-2*y1;
+        }
         PlotPoint(xc, yc, x1, y1, c);
     }
-
 }
 
 int main()
@@ -35,7 +38,7 @@ int main()
     int xc = 300,
         yc = 300,
         r = 100,
-        c = 8;
+        c = 10;
 
     initwindow(620, 620, "Questao 2");
     CircleMidPoint(xc, yc, r, c);

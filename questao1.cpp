@@ -9,23 +9,15 @@ void PlotPoint(int xc, int yc, float *x, float *y, int c, int r)
     int i;
 
     setcolor(c);
-    for (i=NUM_PTS-1; i>0; i--)
+    for (i=0; i<NUM_PTS-1; i++)
     {
-        printf("%d\n\n", i);
-        line(x[i], y[i], x[i-1], y[i-1]);
-        printf("%f %f %f %f\n", x[i], y[i], x[i-1], y[i-1]);
-        line(y[i], x[i], y[i-1], x[i-1]);
-        printf("%f %f %f %f\n", y[i], x[i], y[i-1], x[i-1]);
-		line(y[i], -x[i], y[i-1], -x[i-1]);
-		printf("%f %f %f %f\n", y[i], -x[i], y[i-1], -x[i-1]);
-		line(xc-x[i], yc-y[i], xc-x[i-1], yc-y[i-1]);
-		printf("%f %f %f %f\n", xc-x[i], yc-y[i], xc-x[i-1], yc-y[i-1]);
-		line(yc-y[i], xc-x[i], yc-y[i-1], xc-x[i-1]);
-		printf("%f %f %f %f\n", yc-y[i], xc-x[i], yc-y[i-1], xc-x[i-1]);
-		line(yc-y[i], x[i], yc-y[i-1], x[i-1]);
-		printf("%f %f %f %f\n", yc-y[i], x[i], yc-y[i-1], x[i-1]);
-		line(x[i], yc-y[i], x[i-1], yc-y[i-1]);
-		printf("%f %f %f %f\n", x[i], yc-y[i], x[i-1], yc-y[i-1]);
+        line(x[i], y[i], x[i+1], y[i+1]);
+        line(y[i], x[i], y[i+1], x[i+1]);
+		line(y[i], yc-x[i], y[i+1], yc-x[i+1]);
+		line(xc-x[i], yc-y[i], xc-x[i+1], yc-y[i+1]);
+		line(xc-y[i], yc-x[i], xc-y[i+1], yc-x[i+1]);
+		line(xc-y[i], x[i], xc-y[i+1], x[i+1]);
+		line(x[i], yc-y[i], x[i+1], yc-y[i+1]);
     }
 }
 
@@ -46,9 +38,9 @@ void CircleSimple(int xc, int yc, int r,int c)
 
 int main () {
 
-  int x = 0,
-      y = 0,
-      r = 100,
+  int x = 300,
+      y = 300,
+      r = 50,
       c = 10;
 
   initwindow(620, 620, "Questao 1");
