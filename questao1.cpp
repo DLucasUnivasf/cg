@@ -9,15 +9,29 @@ void PlotPoint(int xc, int yc, float *x, float *y, int c, int r)
     int i;
 
     setcolor(c);
-    for (i=0; i<NUM_PTS-1; i++)
+    for (i=NUM_PTS-1; i>8; i--)
     {
-        line(x[i], y[i], x[i+1], y[i+1]);
-        line(y[i], x[i], y[i+1], x[i+1]);
-		line(y[i], yc-x[i], y[i+1], yc-x[i+1]);
-		line(xc-x[i], yc-y[i], xc-x[i+1], yc-y[i+1]);
-		line(xc-y[i], yc-x[i], xc-y[i+1], yc-x[i+1]);
-		line(xc-y[i], x[i], xc-y[i+1], x[i+1]);
-		line(x[i], yc-y[i], x[i+1], yc-y[i+1]);
+        line(x[i], +y[i], x[i-1], +y[i-1]);
+        printf("(%f, %f) ", x[i], +y[i]);
+        printf("(%f, %f) \n", x[i-1], +y[i-1]);
+        line(y[i], +x[i], y[i-1], +x[i-1]);
+        printf("(%f, %f) ", y[i], +x[i]);
+        printf("(%f, %f) \n", y[i-1], +x[i-1]);
+		line(y[i], -x[i], y[i-1], -x[i-1]);
+		printf("(%f, %f) ", y[i], -x[i]);
+		printf("(%f, %f) \n", y[i-1], -x[i-1]);
+		line(x[i], -y[i], x[i-1], -y[i-1]);
+		printf("(%f, %f) ", x[i], -y[i]);
+		printf("(%f, %f) \n", x[i-1], -y[i-1]);
+		line(y[i], -x[i], y[i-1], -x[i-1]);
+		printf("(%f, %f) ", y[i], -x[i]);
+		printf("(%f, %f) \n", y[i-1], -x[i-1]);
+		line(y[i], +x[i], y[i-1], +x[i-1]);
+		printf("(%f, %f) ", y[i], +x[i]);
+		printf("(%f, %f) \n", y[i-1], +x[i-1]);
+		line(x[i], -y[i], x[i-1], -y[i-1]);
+		printf("(%f, %f) ", x[i], -y[i]);
+		printf("(%f, %f) \n", x[i-1], -y[i-1]);
     }
 }
 
