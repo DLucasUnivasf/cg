@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <graphics.h>
 
+/*                       PONTO MÉDIO
+                     Daniele Silva Reis
+*/
+
 void PlotPoint(int xc, int yc, float x, float y, int c)
 {
     putpixel(xc+x,yc+y,c);
