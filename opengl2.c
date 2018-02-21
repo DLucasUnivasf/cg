@@ -14,6 +14,8 @@ GLfloat r_obj, g_obj, b_obj;
 GLfloat r_lab, g_lab, b_lab;
 GLfloat r_win, g_win, b_win;
 
+GLsizei width = 400, height = 400;
+
 GLfloat left = -7.0f, right = 13.0f, bottom = -3.0f, top = 17.0f;
 
 GLint win_x = 400, win_y = 400;
@@ -272,6 +274,9 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 {
     if (h == 0) h = 1;
 
+    width = w;
+    height = h;
+
     glViewport(0, 0, w, h);
 
     /*glMatrixMode(GL_PROJECTION);
@@ -309,7 +314,6 @@ void GerenciaMouse(int button, int state, int x, int y)
                 r_obj = (double)(rand()%1001)/1000;
                 g_obj = (double)(rand()%1001)/1000;
                 b_obj = (double)(rand()%1001)/1000;
-                status = 2;
             }
         }
     }
@@ -317,9 +321,7 @@ void GerenciaMouse(int button, int state, int x, int y)
     {
         if (state == GLUT_DOWN)
         {
-            int menu;
-
-            menu = glutCreateMenu(RestartGame);
+            glutCreateMenu(RestartGame);
             glutAddMenuEntry("Restart", 0);
 
             glutAttachMenu(GLUT_RIGHT_BUTTON);
