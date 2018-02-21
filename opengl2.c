@@ -2,43 +2,96 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <time.h>
-
 #include <GL/glut.h>
-
 #define PI 3.14159265
 
 GLfloat dx, dy, step;
 GLfloat ang, ang_step;
 GLfloat p1x, p1y, p2x, p2y, p3x, p3y;
-GLfloat r, g, b;
+
+GLfloat r_obj, g_obj, b_obj;
+GLfloat r_lab, g_lab, b_lab;
+GLfloat r_win, g_win, b_win;
+
+GLfloat left = -7.0f, right = 13.0f, bottom = -3.0f, top = 17.0f;
 
 GLint win_x = 400, win_y = 400;
 
-void Inicializa (void)
+int status; /*0 - fail | 1 - playing | 2 - success*/
+
+void Inicializa (GLfloat left, GLfloat right, GLfloat bottom, GLfloat top)
 {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    r_obj = g_obj = b_obj = r_lab = g_lab = b_lab = 0.0;
+    r_win = g_win = b_win = 1.0;
+
+    glClearColor(r_win, g_win, b_win, 1.0f);
     glMatrixMode(GL_PROJECTION);
-    gluOrtho2D (-7.0f, 13.0f, -3.0f, 17.0f);
+    gluOrtho2D (left, right, bottom, top);
 
     dx = dy = ang = 0.0;
-    ang_step = 2;
+    ang_step = 10;
     step = 0.3;
 
     p1x = p1y = p3y = -0.5;
     p2x = 0.0;
     p2y = p3x = 0.5;
 
-    r = g = b = 0.0;
+    status = 1;
 
     srand(time(NULL));
+}
+
+void Desenha(void)
+{
+    glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    switch(status)
+    {
+        case 0: DesenhaNovaTela(0.698, 0.133, 0.133, 0, "FAIL!"); break;
+        case 1:
+                DesenhaLabirinto();
+
+                glTranslatef(dx, dy, 0.0);
+                glRotatef(ang, 0.0f, 0.0f, 1.0f);
+
+                glBegin(GL_TRIANGLES);
+                glColor3f(r_obj, g_obj, b_obj);
+                glVertex2f(-0.5, -0.5);
+                glVertex2f(0.0, 0.5);
+                glVertex2f(0.5, -0.5);
+                glEnd();
+                break;
+
+        case 2: DesenhaNovaTela(0.133, 0.545, 0.133, -2, "CONGRATS!");
+    }
+
+    glFlush();
 }
 
 void DesenhaLabirinto()
 {
     glLineWidth(3.0);
-    glColor3f(0.0f, 0.0f, 0.0f);
 
     glBegin(GL_LINES);
+
+    /*paredes escondidas*/
+    glColor3f(r_win, g_win, b_win);
+
+    glVertex2f(-0.75, -1.0);
+    glVertex2f(-0.75, 0.5);
+
+    glVertex2f(0.75, -1.0);
+    glVertex2f(0.75, 0.5);
+
+    glVertex2f(-0.75, -1.0);
+    glVertex2f(0.75, -1.0);
+    /*--------------------*/
+
+    glColor3f(r_lab, g_lab, b_lab);
+
     glVertex2f(-0.75, 0.5);
     glVertex2f(-0.75, 3.5);
 
@@ -90,36 +143,30 @@ void DesenhaLabirinto()
     glEnd();
 }
 
-void Desenha(void)
+void DesenhaNovaTela(GLfloat v1, GLfloat v2, GLfloat v3, GLfloat x, char *string)
 {
-    glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
+    glClearColor(v1, v2, v3, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    DesenhaLabirinto();
+    glColor3f(1.0, 1.0, 1.0);
 
-    glRasterPos2f(-2, -2);
-    DesenhaTexto(GLUT_BITMAP_9_BY_15,"OpenGl");
-    glutSwapBuffers();
+    glPushMatrix();
+    glTranslatef(x, 7, 0);
+    glScalef(0.01, 0.01, 0.01);
+    glLineWidth(3);
+    DesenhaTextoStroke(GLUT_STROKE_MONO_ROMAN, string);
+    glPopMatrix();
 
-    glTranslatef(dx, dy, 0.0);
-    glRotatef(ang, 0.0f, 0.0f, 1.0f);
-
-    glBegin(GL_TRIANGLES);
-    glColor3f(r, g, b);
-    glVertex2f(-0.5, -0.5);
-    glVertex2f(0.0, 0.5);
-    glVertex2f(0.5, -0.5);
-    glEnd();
-
-    glFlush();
+    glTranslatef(-6.5, 5, 0);
+    glScalef(0.008, 0.008, 0.01);
+	DesenhaTextoStroke(GLUT_STROKE_MONO_ROMAN, "Right click to restart!");
+	glutSwapBuffers();
 }
 
-void DesenhaTexto(void *font, char *string)
+void DesenhaTextoStroke(void *font, char *string)
 {
-    while(*string)
-		glutBitmapCharacter(GLUT_BITMAP_9_BY_15,*string++);
+	while(*string)
+		glutStrokeCharacter(font, *string++);
 }
 
 void Teclado(unsigned char key, int x, int y)
@@ -220,6 +267,50 @@ void SetasTeclado(unsigned char key, int xp, int yp)
     glutPostRedisplay();
 }
 
+void GerenciaMouse(int button, int state, int x, int y)
+{
+    GLfloat new_x, new_y;
+
+    if (button == GLUT_LEFT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            new_x = (float)x/20 - 7;
+            new_y = 17 - (float)y/20;
+
+            if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
+            {
+                r_obj = (double)(rand()%1001)/1000;
+                g_obj = (double)(rand()%1001)/1000;
+                b_obj = (double)(rand()%1001)/1000;
+                status = 2;
+            }
+        }
+    }
+    else if (button == GLUT_RIGHT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            int menu;
+
+            menu = glutCreateMenu(RestartGame);
+            glutAddMenuEntry("Restart", 0);
+
+            glutAttachMenu(GLUT_RIGHT_BUTTON);
+        }
+    }
+    glutPostRedisplay();
+}
+
+void RestartGame(int op)
+{
+    if (op == 0)
+    {
+        Inicializa(0, 0, 0, 0);
+        glutPostRedisplay();
+    }
+}
+
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 {
     if (h == 0) h = 1;
@@ -236,28 +327,6 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     */
 }
 
-void GerenciaMouse(int button, int state, int x, int y)
-{
-    GLfloat new_x, new_y;
-
-    if (button == GLUT_LEFT_BUTTON)
-    {
-        if (state == GLUT_DOWN)
-        {
-            new_x = (float)x/20 - 7;
-            new_y = 17 - (float)y/20;
-
-            if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
-            {
-                r = (double)(rand()%1001)/1000;
-                g = (double)(rand()%1001)/1000;
-                b = (double)(rand()%1001)/1000;
-                glutPostRedisplay();
-            }
-        }
-    }
-}
-
 int main(void)
 {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
@@ -269,7 +338,7 @@ int main(void)
     glutKeyboardFunc(Teclado);
     glutSpecialFunc(SetasTeclado);
     glutMouseFunc(GerenciaMouse);
-    Inicializa();
+    Inicializa(left, right, bottom, top);
 
     glutMainLoop();
 }
