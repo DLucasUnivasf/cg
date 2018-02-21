@@ -14,7 +14,6 @@ GLfloat r, g, b;
 
 GLint win_x = 400, win_y = 400;
 
-
 void Inicializa (void)
 {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -97,7 +96,12 @@ void Desenha(void)
 	glLoadIdentity();
 
     glClear(GL_COLOR_BUFFER_BIT);
+
     DesenhaLabirinto();
+
+    glRasterPos2f(-2, -2);
+    DesenhaTexto(GLUT_BITMAP_9_BY_15,"OpenGl");
+    glutSwapBuffers();
 
     glTranslatef(dx, dy, 0.0);
     glRotatef(ang, 0.0f, 0.0f, 1.0f);
@@ -110,6 +114,12 @@ void Desenha(void)
     glEnd();
 
     glFlush();
+}
+
+void DesenhaTexto(void *font, char *string)
+{
+    while(*string)
+		glutBitmapCharacter(GLUT_BITMAP_9_BY_15,*string++);
 }
 
 void Teclado(unsigned char key, int x, int y)
@@ -232,15 +242,18 @@ void GerenciaMouse(int button, int state, int x, int y)
 
     if (button == GLUT_LEFT_BUTTON)
     {
-        new_x = (float)x/20 - 7;
-        new_y = 17 - (float)y/20;
-
-        if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
+        if (state == GLUT_DOWN)
         {
-            r = (double)(rand()%1001)/1000;
-            g = (double)(rand()%1001)/1000;
-            b = (double)(rand()%1001)/1000;
-            glutPostRedisplay();
+            new_x = (float)x/20 - 7;
+            new_y = 17 - (float)y/20;
+
+            if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
+            {
+                r = (double)(rand()%1001)/1000;
+                g = (double)(rand()%1001)/1000;
+                b = (double)(rand()%1001)/1000;
+                glutPostRedisplay();
+            }
         }
     }
 }
