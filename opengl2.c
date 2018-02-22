@@ -14,10 +14,9 @@ GLfloat r_obj, g_obj, b_obj;
 GLfloat r_lab, g_lab, b_lab;
 GLfloat r_win, g_win, b_win;
 
-GLfloat left = -7.0f, right = 13.0f, bottom = -3.0f, top = 17.0f;
-
-GLint win_x = 400, win_y = 400;
 GLsizei width = 400, height = 400;
+
+GLfloat left = -7.0f, right = 13.0f, bottom = -3.0f, top = 17.0f;
 
 int status; /*0 - fail | 1 - playing | 2 - success*/
 
@@ -130,8 +129,9 @@ void DesenhaNovaTela(GLfloat v1, GLfloat v2, GLfloat v3, GLfloat x, char *string
     glPopMatrix();
 
     glTranslatef(-6.5, 5, 0);
-    glScalef(0.008, 0.008, 0.008);
+    glScalef(0.008, 0.012, 1);
 	DesenhaTextoStroke(GLUT_STROKE_MONO_ROMAN, "Right click to restart!");
+
 	glutSwapBuffers();
 }
 
@@ -301,8 +301,9 @@ void GerenciaMouse(int button, int state, int x, int y)
     {
         if (state == GLUT_DOWN)
         {
-            new_x = (float)x*(width/20)/width - 7;
-            new_y = 17 - (float)y*(height/20)/height;
+            printf("width: %d | height: %d\n", width, height);
+            new_x = (float)((float)x*((float)width/20)/width) - (float)((float)((float)width/400)*7);
+            new_y = (float)((float)((float)height/400)*17) - (float)((float)y*((float)height/20)/height);
 
             if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
             {
@@ -328,7 +329,7 @@ void GerenciaMouse(int button, int state, int x, int y)
 int main(void)
 {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(win_x, win_y);
+    glutInitWindowSize(width, height);
     glutCreateWindow("");
 
     glutDisplayFunc(Desenha);
