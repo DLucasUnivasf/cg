@@ -14,11 +14,10 @@ GLfloat r_obj, g_obj, b_obj;
 GLfloat r_lab, g_lab, b_lab;
 GLfloat r_win, g_win, b_win;
 
-GLsizei width = 400, height = 400;
-
 GLfloat left = -7.0f, right = 13.0f, bottom = -3.0f, top = 17.0f;
 
 GLint win_x = 400, win_y = 400;
+GLsizei width = 400, height = 400;
 
 int status; /*0 - fail | 1 - playing | 2 - success*/
 
@@ -131,7 +130,7 @@ void DesenhaNovaTela(GLfloat v1, GLfloat v2, GLfloat v3, GLfloat x, char *string
     glPopMatrix();
 
     glTranslatef(-6.5, 5, 0);
-    glScalef(0.008, 0.008, 0.01);
+    glScalef(0.008, 0.008, 0.008);
 	DesenhaTextoStroke(GLUT_STROKE_MONO_ROMAN, "Right click to restart!");
 	glutSwapBuffers();
 }
@@ -188,35 +187,35 @@ void SetasTeclado(unsigned char key, int xp, int yp)
     {
         if (ang >= 0 && ang <= 90)
         {
-            dy += cos(fabs(ang)*PI/180) * step;
-            dx -= sin(fabs(ang)*PI/180) * step;
+            dy += cos(ang*PI/180) * step;
+            dx -= sin(ang*PI/180) * step;
 
-            x = -sin(fabs(ang)*PI/180) * step;
-            y = cos(fabs(ang)*PI/180) * step;
+            x = -sin(ang*PI/180) * step;
+            y = cos(ang*PI/180) * step;
         }
         else if (ang > 90 && ang <= 180)
         {
-            dy -= -cos(fabs(ang)*PI/180) * step;
-            dx -= sin(fabs(ang)*PI/180) * step;
+            dy -= -cos(ang*PI/180) * step;
+            dx -= sin(ang*PI/180) * step;
 
-            x = -sin(fabs(ang)*PI/180) * step;
-            y = cos(fabs(ang)*PI/180) * step;
+            x = -sin(ang*PI/180) * step;
+            y = cos(ang*PI/180) * step;
         }
         else if (ang > 180 && ang <= 270)
         {
-            dy -= -cos(fabs(ang)*PI/180) * step;
-            dx += -sin(fabs(ang)*PI/180) * step;
+            dy -= -cos(ang*PI/180) * step;
+            dx += -sin(ang*PI/180) * step;
 
-            x = -sin(fabs(ang)*PI/180) * step;
-            y = cos(fabs(ang)*PI/180) * step;
+            x = -sin(ang*PI/180) * step;
+            y = cos(ang*PI/180) * step;
         }
         else if (ang > 270 && ang <= 360)
         {
-            dy += cos(fabs(ang)*PI/180) * step;
-            dx += -sin(fabs(ang)*PI/180) * step;
+            dy += cos(ang*PI/180) * step;
+            dx += -sin(ang*PI/180) * step;
 
-            x = -sin(fabs(ang)*PI/180) * step;
-            y = cos(fabs(ang)*PI/180) * step;
+            x = -sin(ang*PI/180) * step;
+            y = cos(ang*PI/180) * step;
         }
     }
     else if (key == GLUT_KEY_DOWN)
@@ -274,19 +273,15 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 {
     if (h == 0) h = 1;
 
+    glViewport(0, 0, w, h);
+
     width = w;
     height = h;
 
-    glViewport(0, 0, w, h);
-
-    /*glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-    if (w <= h)
-		gluOrtho2D (0.0f, 20.0f, 0.0f, 20.0f*h/w);
-	else
-		gluOrtho2D (0.0f, 20.0f*w/h, 0.0f, 20.0f);
-    */
+    gluOrtho2D (left, right, bottom, top);
 }
 
 void RestartGame(int op)
@@ -306,8 +301,8 @@ void GerenciaMouse(int button, int state, int x, int y)
     {
         if (state == GLUT_DOWN)
         {
-            new_x = (float)x/20 - 7;
-            new_y = 17 - (float)y/20;
+            new_x = (float)x*(width/20)/width - 7;
+            new_y = 17 - (float)y*(height/20)/height;
 
             if (new_x >= p1x && new_x <= p3x && new_y <= p2y && new_y >= p1y)
             {
