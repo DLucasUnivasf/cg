@@ -11,12 +11,16 @@ GLfloat largura = 700, altura = 500;
 int qtd_buracos = 1;
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
+GLfloat new_x, new_y;
+GLfloat larg_buraco, alt_buraco;
+GLfloat martelo_angulo;
 
 void Inicializa ()
 {
     r_buraco = 0.5;
     g_buraco = 0.5;
     b_buraco = 0.5;
+    martelo_angulo = 45;
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glMatrixMode(GL_PROJECTION);
     gluOrtho2D (esq, dirg, base, cimag);
@@ -44,7 +48,6 @@ void CalculaBuracos(void)
     GLint raizi = raizf, qtd = raizi * raizi;
     GLint rest = qtd_buracos - qtd;
     GLint linha_rest;
-    GLfloat larg_buraco, alt_buraco;
     GLfloat dist_buraco_x, dist_buraco_y;
     GLint qtdx_aux, qtdy_aux, rest_ult_linha;
 
@@ -69,15 +72,15 @@ void CalculaBuracos(void)
 
         for (j=0; j<qtdx_aux; j++)
         {
-            pos_x = (float)(j*larg_buraco+(j+1)*dist_buraco_x);
-            pos_y = (float)(i*alt_buraco+(i+1)*dist_buraco_y);
+            pos_x = (float)(j * larg_buraco + (j + 1) * dist_buraco_x);
+            pos_y = (float)(i * alt_buraco  + (i + 1) * dist_buraco_y);
 
             glBegin(GL_POLYGON);
             glColor3f(r_buraco, g_buraco, b_buraco);
-            glVertex3f(pos_x, pos_y, 0);
-            glVertex3f(pos_x + larg_buraco, pos_y, 0);
+            glVertex3f(pos_x              , pos_y             , 0);
+            glVertex3f(pos_x + larg_buraco, pos_y             , 0);
             glVertex3f(pos_x + larg_buraco, pos_y + alt_buraco, 0);
-            glVertex3f(pos_x, pos_y + alt_buraco, 0);
+            glVertex3f(pos_x              , pos_y + alt_buraco, 0);
             glEnd();
 
             salvaPosicao(pos_x, pos_y, larg_buraco, alt_buraco, ctr);
@@ -105,6 +108,7 @@ void Desenha(void)
 	glLoadIdentity();
 
     glClear(GL_COLOR_BUFFER_BIT);
+
     glBegin(GL_QUADS);
     glColor3f(0.0f, 0.0f, 0.0f);
     glVertex2f(esq, base);
@@ -113,7 +117,28 @@ void Desenha(void)
     glVertex2f(esq, cima);
     glEnd();
     CalculaBuracos();
+    DesenhaMartelo();
     glFlush();
+}
+
+void DesenhaMartelo()
+{
+    glTranslatef(new_x, new_y, 0);
+    glRotatef(martelo_angulo, 0, 0, 1);
+    glBegin(GL_QUADS);
+    glColor3f(0.545f, 0.271f, 0.075f);
+    glVertex2f(-larg_buraco/10, -alt_buraco/3);
+    glVertex2f( larg_buraco/2 , -alt_buraco/3);
+    glVertex2f( larg_buraco/2 ,  alt_buraco/3);
+    glVertex2f(-larg_buraco/10,  alt_buraco/3);
+    glEnd();
+
+    glBegin(GL_QUADS);
+    glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
+    glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
+    glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco);
+    glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco);
+    glEnd();
 }
 
 void DesenhaTextoStroke(void *font, char *string)
@@ -156,7 +181,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 
 void GerenciaMouse(int button, int state, int x, int y)
 {
-    GLfloat new_x, new_y, x_aux, y_aux;
+    GLfloat x_aux, y_aux;
     int pos;
 
     if (button == GLUT_LEFT_BUTTON)
@@ -166,12 +191,29 @@ void GerenciaMouse(int button, int state, int x, int y)
             x_aux = (float)x;
             y_aux = (float)y;
 
-            new_x = (x_aux * (dirg - esq))/largura;
+            new_x =         (x_aux * (dirg  - esq))/largura;
             new_y = cimag - (y_aux * (cimag - base))/altura;
+
             pos = buracoAcertado(new_x, new_y);
+            printf("%d\n", pos);
+            martelo_angulo = 90;
             //if(pos != -1) faz algo
         }
     }
+    glutPostRedisplay();
+}
+
+void PosicaoMouse(int x, int y)
+{
+    GLfloat x_aux, y_aux;
+
+    x_aux = (float)x;
+    y_aux = (float)y;
+    new_x =         (x_aux * (dirg - esq))/largura;
+    new_y = cimag - (y_aux * (cimag - base))/altura;
+
+    if (martelo_angulo == 90) martelo_angulo = 45;
+    glutPostRedisplay();
 }
 
 int main(void)
@@ -179,11 +221,11 @@ int main(void)
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(largura, altura);
     glutCreateWindow("");
-
     glutDisplayFunc(Desenha);
     glutReshapeFunc(AlteraTamanhoJanela);
     glutKeyboardFunc(Teclado);
     //glutSpecialFunc(SetasTeclado);
+    glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
     Inicializa();
 
