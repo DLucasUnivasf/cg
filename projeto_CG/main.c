@@ -157,6 +157,7 @@ void Desenha(void)
 
     DesenhaPontos();
     CalculaBuracos();
+    AlocaObjetos();
     DesenhaObjeto();
     DesenhaMartelo();
     glFlush();
@@ -187,7 +188,7 @@ void DesenhaObjeto()
         glPushMatrix();
         glColor3f(0.5, 0, 0);
 
-        //glTranslatef(buracos_pos[i][0] + desloc_x, buracos_pos[i][2] + desloc_y, 0);
+        glTranslatef(buracos_pos[i][0] + desloc_x, buracos_pos[i][2] + desloc_y, 0);
         glScalef(0.7, 0.7, 0.7);
         glBegin(GL_QUADS);
         glVertex2f(0, 0);
@@ -224,13 +225,15 @@ void DesenhaMartelo()
 
 void DesenhaPontos()
 {
-    char *string = "Pontos", *pts;
+    int i, qtd = (pontos == 0) ? 1: floor(log10(abs(pontos)))+1;
+    char *string = "Pontos", pts[qtd];
     sprintf(pts, "%d", pontos);
 
     glPushMatrix();
     glTranslatef(dir, cimag-6, 0);
     glScalef(0.07, 0.05, 0.1);
     glLineWidth(2);
+
 	while(*string)
 		glutStrokeCharacter(GLUT_STROKE_ROMAN, *string++);
 
@@ -239,10 +242,11 @@ void DesenhaPontos()
     glPushMatrix();
     glTranslatef(dir, cimag-12, 0);
     glScalef(0.07, 0.05, 0.1);
-    while (*pts)
-        glutStrokeCharacter(GLUT_STROKE_ROMAN, *pts++);
-    glPopMatrix();
 
+    for (i = 0; i < qtd; i++)
+    glutStrokeCharacter(GLUT_STROKE_ROMAN, pts[i]);
+
+    glPopMatrix();
     glutSwapBuffers();
 }
 
