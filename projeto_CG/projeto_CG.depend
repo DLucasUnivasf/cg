@@ -7,7 +7,21 @@
 	<math.h>
 	<GL/glut.h>
 
-1522438834 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
+1522442172 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
+	<math.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+	<math.h>
+	<GL/glut.h>
+
+1522440949 source:c:\users\danie\desktop\projetos\cg\projeto_cg\configuracoesgerais.c
+	"ConfiguracoesGerais.h"
+
+1522441245 c:\users\danie\desktop\projetos\cg\projeto_cg\configuracoesgerais.h
+	"main.h"
+
+1522441225 c:\users\danie\desktop\projetos\cg\projeto_cg\main.h
 	<math.h>
 	<stdlib.h>
 	<windows.h>

@@ -12,7 +12,6 @@ GLfloat new_x, new_y;
 GLfloat larg_buraco, alt_buraco;
 GLfloat dist_buraco_x, dist_buraco_y;
 GLfloat desloc_x, desloc_y;
-GLfloat aux = 0;
 GLfloat martelo_angulo;
 
 GLfloat dirg    = 100.0f,
@@ -26,20 +25,24 @@ GLfloat esq     = 0.0f,
 GLfloat largura = 700,
         altura  = 500;
 
-int pontos      = 0;
-int qtd_buracos = 4;
-int qtd_objetos = 1;
+int pontos;
+int qtd_buracos;
+int qtd_objetos;
 
-void Inicializa()
+void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
 {
     r_buraco        = 0.5;
     g_buraco        = 0.5;
     b_buraco        = 0.5;
     martelo_angulo  = 45;
 
+    pontos = 0;
+    qtd_buracos = 4;
+    qtd_objetos = 1;
+
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glMatrixMode(GL_PROJECTION);
-    gluOrtho2D (esq, dirg, base, cimag);
+    gluOrtho2D (e, d, b, c);
 
     AlocaObjetos();
     srand(time(NULL));
@@ -270,17 +273,6 @@ void Teclado(unsigned char key, int x, int y)
 {
     if (key == 27)
         exit(0);
-    /*else if (key == 43)
-        qtd_buracos = (qtd_buracos == 25) ? 25 : qtd_buracos+1;
-    else if (key == 45)
-        qtd_buracos = (qtd_buracos == 4) ? 4 : qtd_buracos-1;
-
-    glutPostRedisplay();*/
-}
-
-void SetasTeclado(unsigned char key, int xp, int yp)
-{
-    //glutPostRedisplay();
 }
 
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
@@ -296,6 +288,12 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 	glLoadIdentity();
 
     gluOrtho2D (esq, dirg, base, cimag);
+}
+
+void ReiniciaJogo()
+{
+    Inicializa(0, 0, 0, 0);
+    glutPostRedisplay();
 }
 
 void GerenciaMouse(int button, int state, int x, int y)
@@ -316,6 +314,17 @@ void GerenciaMouse(int button, int state, int x, int y)
             pos = buracoAcertado(new_x, new_y);
             objetoAcertado(pos);
             martelo_angulo = 90;
+        }
+    }
+
+    else if (button == GLUT_RIGHT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
+            glutCreateMenu(ReiniciaJogo);
+            glutAddMenuEntry("Restart", 0);
+
+            glutAttachMenu(GLUT_RIGHT_BUTTON);
         }
     }
     glutPostRedisplay();
@@ -342,9 +351,8 @@ int main(void)
     glutDisplayFunc(Desenha);
     glutReshapeFunc(AlteraTamanhoJanela);
     glutKeyboardFunc(Teclado);
-    //glutSpecialFunc(SetasTeclado);
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
-    Inicializa();
+    Inicializa(esq, dirg, base, cimag);
     glutMainLoop();
 }
