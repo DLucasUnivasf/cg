@@ -25,9 +25,10 @@ GLfloat esq     = 0.0f,
 GLfloat largura = 700,
         altura  = 500;
 
+int aux = 0;
 int pontos;
-int qtd_buracos;
-int qtd_objetos;
+int qtd_buracos = 4;
+int qtd_objetos = 1;
 
 void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
 {
@@ -37,8 +38,6 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
     martelo_angulo  = 45;
 
     pontos = 0;
-    qtd_buracos = 4;
-    qtd_objetos = 1;
 
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glMatrixMode(GL_PROJECTION);
@@ -136,11 +135,13 @@ void objetoAcertado(int buraco)
         if (objetos_pos[i] == buraco)
         {
             pontos += qtd_buracos * qtd_objetos;
-            if (pontos > qtd_buracos * qtd_objetos * 20)
+            AlocaObjetos();
+
+            if (aux && (pontos > qtd_buracos * qtd_objetos * 10))
             {
-                qtd_buracos = (qtd_buracos == 25) ? 25 : qtd_buracos+1;
+                qtd_buracos = (qtd_buracos == 81) ? 81 : pow(sqrt(qtd_buracos) + 1, 2);
                 qtd_objetos = (qtd_objetos == 10) ? 10 : qtd_objetos+1;
-                AlocaObjetos();
+
             }
         }
     }
@@ -290,8 +291,28 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     gluOrtho2D (esq, dirg, base, cimag);
 }
 
-void ReiniciaJogo()
+void ReiniciaJogo(int opcao)
 {
+    switch(opcao)
+    {
+        case 0:
+            qtd_buracos = 4;
+            qtd_objetos = 1;
+            break;
+        case 1:
+            qtd_buracos = 9;
+            qtd_objetos = 2;
+            break;
+        case 2:
+            qtd_buracos = 16;
+            qtd_objetos = 3;
+            break;
+        case 3:
+            qtd_buracos = 25;
+            qtd_objetos = 4;
+            aux = 1;
+    }
+
     Inicializa(0, 0, 0, 0);
     glutPostRedisplay();
 }
@@ -322,7 +343,10 @@ void GerenciaMouse(int button, int state, int x, int y)
         if (state == GLUT_DOWN)
         {
             glutCreateMenu(ReiniciaJogo);
-            glutAddMenuEntry("Restart", 0);
+            glutAddMenuEntry("Fácil", 0);
+            glutAddMenuEntry("Intermediário", 1);
+            glutAddMenuEntry("Difícil", 2);
+            glutAddMenuEntry("Avançado", 3);
 
             glutAttachMenu(GLUT_RIGHT_BUTTON);
         }
