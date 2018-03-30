@@ -7,10 +7,12 @@
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
-GLint *objetos_pos;
+int *objetos_pos;
 GLfloat new_x, new_y;
 GLfloat larg_buraco, alt_buraco;
 GLfloat dist_buraco_x, dist_buraco_y;
+GLfloat desloc_x, desloc_y;
+GLfloat aux = 0;
 GLfloat martelo_angulo;
 
 GLfloat dirg    = 100.0f,
@@ -39,6 +41,7 @@ void Inicializa()
     glMatrixMode(GL_PROJECTION);
     gluOrtho2D (esq, dirg, base, cimag);
 
+    AlocaObjetos();
     srand(time(NULL));
 
     //srand(time(NULL));
@@ -130,10 +133,11 @@ void objetoAcertado(int buraco)
         if (objetos_pos[i] == buraco)
         {
             pontos += qtd_buracos * qtd_objetos;
-            if (pontos == qtd_buracos * 50)
+            if (pontos > qtd_buracos * qtd_objetos * 20)
             {
                 qtd_buracos = (qtd_buracos == 25) ? 25 : qtd_buracos+1;
                 qtd_objetos = (qtd_objetos == 10) ? 10 : qtd_objetos+1;
+                AlocaObjetos();
             }
         }
     }
@@ -157,7 +161,7 @@ void Desenha(void)
 
     DesenhaPontos();
     CalculaBuracos();
-    AlocaObjetos();
+    //AlocaObjetos();
     DesenhaObjeto();
     DesenhaMartelo();
     glFlush();
@@ -165,20 +169,32 @@ void Desenha(void)
 
 void AlocaObjetos()
 {
-    int i;
+    int i, j;
 
-    objetos_pos = (GLfloat *)malloc(sizeof(GLfloat) * qtd_objetos);
+    objetos_pos = (int *)malloc(sizeof(int) * qtd_objetos);
 
     for (i = 0; i < qtd_objetos; i++)
         objetos_pos[i] = (int)rand()%qtd_buracos;
+}
 
+int ContemObjeto(int buraco)
+{
+    int i, j;
+
+    for (i = 0; i < qtd_buracos; i++)
+    {
+        for (j = 0; j < qtd_objetos; j++)
+        {
+            if (objetos_pos[j] == i) return 1;
+        }
+    }
+
+    return 0;
 }
 
 void DesenhaObjeto()
 {
-    int i;
-
-    GLfloat desloc_x, desloc_y;
+    int i, j;
 
     desloc_x = larg_buraco/7;
     desloc_y = alt_buraco/7;
@@ -330,6 +346,5 @@ int main(void)
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
     Inicializa();
-
     glutMainLoop();
 }
