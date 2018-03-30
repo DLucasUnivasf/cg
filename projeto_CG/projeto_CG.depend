@@ -1,1 +1,9 @@
 # depslib dependency file v1.0
+1522414351 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\main.c
+	<math.h>
+	<stdlib.h>
+	<windows.h>
+	<time.h>
+	<math.h>
+	<GL/glut.h>
+

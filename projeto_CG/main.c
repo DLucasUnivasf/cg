@@ -164,18 +164,25 @@ void DesenhaMartelo()
 
 void DesenhaPontos()
 {
-    char *string = "Pontos";
-    char teste[10];
+    char *string = "Pontos", *pts;
+    sprintf(pts, "%d", pontos);
 
     glPushMatrix();
     glTranslatef(dir, cimag-6, 0);
     glScalef(0.07, 0.05, 0.1);
     glLineWidth(2);
-
 	while(*string)
 		glutStrokeCharacter(GLUT_STROKE_ROMAN, *string++);
 
     glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(dir, cimag-12, 0);
+    glScalef(0.07, 0.05, 0.1);
+    while (*pts)
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, *pts++);
+    glPopMatrix();
+
     glutSwapBuffers();
 }
 
@@ -227,7 +234,6 @@ void GerenciaMouse(int button, int state, int x, int y)
             new_y = cimag - (y_aux * (cimag - base))/altura;
 
             pos = buracoAcertado(new_x, new_y);
-            printf("%d\n", pos);
             martelo_angulo = 90;
             //if(pos != -1) faz algo
         }
