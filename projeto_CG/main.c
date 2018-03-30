@@ -7,8 +7,10 @@
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
+GLint *objetos_pos;
 GLfloat new_x, new_y;
 GLfloat larg_buraco, alt_buraco;
+GLfloat dist_buraco_x, dist_buraco_y;
 GLfloat martelo_angulo;
 
 GLfloat dirg    = 100.0f,
@@ -24,6 +26,7 @@ GLfloat largura = 700,
 
 int pontos      = 0;
 int qtd_buracos = 4;
+int qtd_objetos = 1;
 
 void Inicializa()
 {
@@ -35,6 +38,8 @@ void Inicializa()
     glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glMatrixMode(GL_PROJECTION);
     gluOrtho2D (esq, dirg, base, cimag);
+
+    srand(time(NULL));
 
     //srand(time(NULL));
 }
@@ -61,7 +66,6 @@ void CalculaBuracos(void)
     GLint rest      = qtd_buracos - qtd;
 
     GLint linha_rest;
-    GLfloat dist_buraco_x, dist_buraco_y;
     GLint qtdx_aux, qtdy_aux, rest_ult_linha;
 
     GLfloat pos_x, pos_y;
@@ -111,13 +115,29 @@ int buracoAcertado(GLfloat x, GLfloat y)
     {
         if((x > buracos_pos[i][0] && x < buracos_pos[i][1]) &&
            (y > buracos_pos[i][2] && y < buracos_pos[i][3]))
-        {
-            pontos += qtd_buracos;
-            return i;
-        }
+                return i;
     }
 
     return -1;
+}
+
+void objetoAcertado(int buraco)
+{
+    int i;
+
+    for(i = 0; i < qtd_objetos; i++)
+    {
+        if (objetos_pos[i] == buraco)
+        {
+            pontos += qtd_buracos * qtd_objetos;
+            if (pontos == qtd_buracos * 50)
+            {
+                qtd_buracos = (qtd_buracos == 25) ? 25 : qtd_buracos+1;
+                qtd_objetos = (qtd_objetos == 10) ? 10 : qtd_objetos+1;
+            }
+        }
+    }
+    glutPostRedisplay();
 }
 
 void Desenha(void)
@@ -134,18 +154,57 @@ void Desenha(void)
     glVertex2f(dir, cima);
     glVertex2f(esq, cima);
     glEnd();
+
     DesenhaPontos();
     CalculaBuracos();
+    DesenhaObjeto();
     DesenhaMartelo();
     glFlush();
+}
 
-    glColor3f(1,0.5,0);
+void AlocaObjetos()
+{
+    int i;
+
+    objetos_pos = (GLfloat *)malloc(sizeof(GLfloat) * qtd_objetos);
+
+    for (i = 0; i < qtd_objetos; i++)
+        objetos_pos[i] = (int)rand()%qtd_buracos;
+
+}
+
+void DesenhaObjeto()
+{
+    int i;
+
+    GLfloat desloc_x, desloc_y;
+
+    desloc_x = larg_buraco/7;
+    desloc_y = alt_buraco/7;
+
+    for (i = 0; i < qtd_buracos; i++)
+    {
+        glPushMatrix();
+        glColor3f(0.5, 0, 0);
+
+        //glTranslatef(buracos_pos[i][0] + desloc_x, buracos_pos[i][2] + desloc_y, 0);
+        glScalef(0.7, 0.7, 0.7);
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(larg_buraco, 0);
+        glVertex2f(larg_buraco, alt_buraco);
+        glVertex2f(0, alt_buraco);
+        glEnd();
+        glPopMatrix();
+    }
 }
 
 void DesenhaMartelo()
 {
+    glPushMatrix();
     glTranslatef(new_x, new_y, 0);
     glRotatef(martelo_angulo, 0, 0, 1);
+
     glBegin(GL_QUADS);
     glColor3f(0.545f, 0.271f, 0.075f);
     glVertex2f(-larg_buraco/10, -alt_buraco/3);
@@ -160,6 +219,7 @@ void DesenhaMartelo()
     glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco);
     glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco);
     glEnd();
+    glPopMatrix();
 }
 
 void DesenhaPontos()
@@ -190,12 +250,12 @@ void Teclado(unsigned char key, int x, int y)
 {
     if (key == 27)
         exit(0);
-    else if (key == 43)
+    /*else if (key == 43)
         qtd_buracos = (qtd_buracos == 25) ? 25 : qtd_buracos+1;
     else if (key == 45)
         qtd_buracos = (qtd_buracos == 4) ? 4 : qtd_buracos-1;
 
-    glutPostRedisplay();
+    glutPostRedisplay();*/
 }
 
 void SetasTeclado(unsigned char key, int xp, int yp)
@@ -221,7 +281,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
 void GerenciaMouse(int button, int state, int x, int y)
 {
     GLfloat x_aux, y_aux;
-    int pos;
+    int pos, hit;
 
     if (button == GLUT_LEFT_BUTTON)
     {
@@ -234,8 +294,8 @@ void GerenciaMouse(int button, int state, int x, int y)
             new_y = cimag - (y_aux * (cimag - base))/altura;
 
             pos = buracoAcertado(new_x, new_y);
+            objetoAcertado(pos);
             martelo_angulo = 90;
-            //if(pos != -1) faz algo
         }
     }
     glutPostRedisplay();
