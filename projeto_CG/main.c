@@ -2,17 +2,14 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <time.h>
-#include <math.h>
 #include <GL/glut.h>
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
 int *objetos_pos;
-GLfloat new_x, new_y;
 GLfloat larg_buraco, alt_buraco;
 GLfloat dist_buraco_x, dist_buraco_y;
 GLfloat desloc_x, desloc_y;
-GLfloat martelo_angulo;
 
 GLfloat dirg    = 100.0f,
         cimag   = 50.0f;
@@ -22,32 +19,16 @@ GLfloat esq     = 0.0f,
         base    = 0.0f,
         cima    = 50.0f;
 
+int pontos = 0;
+int aux = 0;
+int qtd_buracos = 4;
+int qtd_objetos = 1;
+GLfloat martelo_angulo;
+GLfloat new_x, new_y;
+
 GLfloat largura = 700,
         altura  = 500;
 
-int aux = 0;
-int pontos;
-int qtd_buracos = 4;
-int qtd_objetos = 1;
-
-void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
-{
-    r_buraco        = 0.5;
-    g_buraco        = 0.5;
-    b_buraco        = 0.5;
-    martelo_angulo  = 45;
-
-    pontos = 0;
-
-    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-    glMatrixMode(GL_PROJECTION);
-    gluOrtho2D (e, d, b, c);
-
-    AlocaObjetos();
-    srand(time(NULL));
-
-    //srand(time(NULL));
-}
 
 void salvaPosicao(GLfloat pos_x, GLfloat pos_y, GLfloat larg_buraco, GLfloat alt_buraco, int ctr)
 {
@@ -88,12 +69,12 @@ void CalculaBuracos(void)
 
     qtdx_aux        = raizi;
 
-    for (i=0; i<qtdy_aux; i++)
+    for (i = 0; i < qtdy_aux; i++)
     {
         if (i == qtdy_aux - 1)
             qtdx_aux = (rest_ult_linha > 0) ? rest_ult_linha : raizi;
 
-        for (j=0; j<qtdx_aux; j++)
+        for (j = 0; j < qtdx_aux; j++)
         {
             pos_x = (float)(j * larg_buraco + (j + 1) * dist_buraco_x);
             pos_y = (float)(i * alt_buraco  + (i + 1) * dist_buraco_y);
@@ -148,32 +129,9 @@ void objetoAcertado(int buraco)
     glutPostRedisplay();
 }
 
-void Desenha(void)
-{
-    glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(esq, base);
-    glVertex2f(dir, base);
-    glVertex2f(dir, cima);
-    glVertex2f(esq, cima);
-    glEnd();
-
-    DesenhaPontos();
-    CalculaBuracos();
-    //AlocaObjetos();
-    DesenhaObjeto();
-    DesenhaMartelo();
-    glFlush();
-}
-
 void AlocaObjetos()
 {
-    int i, j;
+    int i;
 
     objetos_pos = (int *)malloc(sizeof(int) * qtd_objetos);
 
@@ -198,7 +156,7 @@ int ContemObjeto(int buraco)
 
 void DesenhaObjeto()
 {
-    int i, j;
+    int i;
 
     desloc_x = larg_buraco/7;
     desloc_y = alt_buraco/7;
@@ -270,25 +228,44 @@ void DesenhaPontos()
     glutSwapBuffers();
 }
 
-void Teclado(unsigned char key, int x, int y)
+void Desenha(void)
 {
-    if (key == 27)
-        exit(0);
-}
-
-void AlteraTamanhoJanela(GLsizei w, GLsizei h)
-{
-    if (h == 0) h = 1;
-
-    glViewport(0, 0, w, h);
-
-    largura = w;
-    altura = h;
-
-    glMatrixMode(GL_PROJECTION);
+    glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-    gluOrtho2D (esq, dirg, base, cimag);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glBegin(GL_QUADS);
+    glColor3f(0.0f, 0.0f, 0.0f);
+    glVertex2f(esq, base);
+    glVertex2f(dir, base);
+    glVertex2f(dir, cima);
+    glVertex2f(esq, cima);
+    glEnd();
+
+    DesenhaPontos();
+    CalculaBuracos();
+    //AlocaObjetos();
+    DesenhaObjeto();
+    DesenhaMartelo();
+    glFlush();
+}
+
+void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
+{
+    r_buraco        = 0.5;
+    g_buraco        = 0.5;
+    b_buraco        = 0.5;
+    martelo_angulo  = 45;
+
+    pontos = 0;
+
+    glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D (e, d, b, c);
+
+    AlocaObjetos();
+    srand(time(NULL));
 }
 
 void ReiniciaJogo(int opcao)
@@ -365,6 +342,27 @@ void PosicaoMouse(int x, int y)
 
     if (martelo_angulo == 90) martelo_angulo = 45;
     glutPostRedisplay();
+}
+
+void Teclado(unsigned char key, int x, int y)
+{
+    if (key == 27)
+        exit(0);
+}
+
+void AlteraTamanhoJanela(GLsizei w, GLsizei h)
+{
+    if (h == 0) h = 1;
+
+    glViewport(0, 0, w, h);
+
+    largura = w;
+    altura = h;
+
+    glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+    gluOrtho2D (esq, dirg, base, cimag);
 }
 
 int main(void)

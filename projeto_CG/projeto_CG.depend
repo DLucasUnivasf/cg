@@ -1,11 +1,11 @@
 # depslib dependency file v1.0
-1522422191 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\main.c
+1522455330 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\main.c
 	<math.h>
 	<stdlib.h>
 	<windows.h>
 	<time.h>
-	<math.h>
 	<GL/glut.h>
+	"ConfiguracoesGerais.h"
 
 1522442172 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
 	<math.h>
@@ -28,4 +28,11 @@
 	<time.h>
 	<math.h>
 	<GL/glut.h>
+
+1522455448 c:\users\juju-\desktop\projetos\cg\projeto_cg\configuracoesgerais.h
+	<windows.h>
+	<GL/glut.h>
+
+1522455041 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\configuracoesgerais.c
+	"ConfiguracoesGerais.h"
 
