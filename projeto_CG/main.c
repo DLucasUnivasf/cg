@@ -1,12 +1,20 @@
+#include <SDL.h>
 #include <math.h>
 #include <stdlib.h>
 #include <windows.h>
 #include <time.h>
 #include <GL/glut.h>
+#include <stdio.h>
+#include <SDL_mixer.h>
+
+
+#define PI 3.1415926535898
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
-int *objetos_pos;
+
+int *posicao_digletts;
+
 GLfloat larg_buraco, alt_buraco;
 GLfloat dist_buraco_x, dist_buraco_y;
 GLfloat desloc_x, desloc_y;
@@ -21,14 +29,60 @@ GLfloat esq     = 0.0f,
 
 int pontos = 0;
 int aux = 0;
-int qtd_buracos = 4;
-int qtd_objetos = 1;
+int qtd_buracos = 16;
+int qtd_digletts = 4;
 GLfloat martelo_angulo;
 GLfloat new_x, new_y;
 
 GLfloat largura = 700,
         altura  = 500;
 
+
+GLuint texture_id[7]; //armazena referencia as texturas
+
+int textura_animacao_diglett = 0; //de acordo com o valor desta variavel, seleciona textura do diglett
+
+Mix_Music *music = NULL; //- música de fundo
+Mix_Chunk *diglett_sound = NULL; // efeito sonoro do diglett
+
+
+void CarregadorDeTextura ( char *file_name, int width, int height, int depth,GLenum colour_type, GLenum filter_type ){
+
+/*
+Carrega textura de arquivo no formato RAW.
+*/
+
+    GLubyte *raw_bitmap ;
+    FILE *file;
+
+    if (( file = fopen(file_name, "rb"))==NULL ){
+        printf ( "Arquivo de textura não Encontrado : %s\n", file_name );
+        exit ( 1 );
+    }
+
+    raw_bitmap = (GLubyte *)malloc(width * height * depth * (sizeof(GLubyte)));
+
+    if ( raw_bitmap == NULL ){
+        printf ( "Nao foi possivel alocar espaço de memória para a textura\n" );
+        fclose ( file );
+        exit ( 1 );
+    }
+
+    fread (raw_bitmap , width * height * depth, 1 , file );
+    fclose (file);
+
+    // Define o tipo de filtro a ser utilizado
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter_type );
+    glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_type );
+    // Define o ambiente de Textura
+    glTexEnvf ( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
+    // Construção dos MipMaps
+    gluBuild2DMipmaps ( GL_TEXTURE_2D, colour_type, width, height, colour_type,
+    GL_UNSIGNED_BYTE, raw_bitmap );
+    // Libera a memoria alocada para o array
+    free (raw_bitmap);
+
+}
 
 void salvaPosicao(GLfloat pos_x, GLfloat pos_y, GLfloat larg_buraco, GLfloat alt_buraco, int ctr)
 {
@@ -38,7 +92,7 @@ void salvaPosicao(GLfloat pos_x, GLfloat pos_y, GLfloat larg_buraco, GLfloat alt
     buracos_pos[ctr][3] = pos_y + alt_buraco;
 }
 
-void CalculaBuracos(void)
+void CalculaBuracos()
 {
     int i, j, ctr = 0;
     buracos_pos = (GLfloat **)malloc(sizeof(GLfloat *) * qtd_buracos);
@@ -69,6 +123,7 @@ void CalculaBuracos(void)
 
     qtdx_aux        = raizi;
 
+
     for (i = 0; i < qtdy_aux; i++)
     {
         if (i == qtdy_aux - 1)
@@ -79,12 +134,30 @@ void CalculaBuracos(void)
             pos_x = (float)(j * larg_buraco + (j + 1) * dist_buraco_x);
             pos_y = (float)(i * alt_buraco  + (i + 1) * dist_buraco_y);
 
-            glBegin(GL_POLYGON);
-            glColor3f(r_buraco, g_buraco, b_buraco);
-            glVertex3f(pos_x              , pos_y             , 0);
-            glVertex3f(pos_x + larg_buraco, pos_y             , 0);
-            glVertex3f(pos_x + larg_buraco, pos_y + alt_buraco, 0);
-            glVertex3f(pos_x              , pos_y + alt_buraco, 0);
+
+            glEnable(GL_TEXTURE_2D);
+
+            int posicao = i * raizi + j;
+
+            int aux;
+            for (aux = 0 ; aux < qtd_digletts; aux++){
+                if(posicao == posicao_digletts[aux]){
+                        if(textura_animacao_diglett == 2)
+                            glBindTexture ( GL_TEXTURE_2D, texture_id[2]);
+                        else
+                            glBindTexture ( GL_TEXTURE_2D, texture_id[3]);
+                    break;
+                }
+                else // buranco sem topeira
+                    glBindTexture ( GL_TEXTURE_2D, texture_id[1]);
+            }
+
+             glBegin(GL_POLYGON);
+             //glColor4f(1, 1, 1,1);
+             glTexCoord2f(0.0f, 0.0f);glVertex3f(pos_x               , pos_y             , 0);
+             glTexCoord2f(1.0f, 0.0f); glVertex3f(pos_x + larg_buraco, pos_y             , 0);
+             glTexCoord2f(1.0f, 1.0f); glVertex3f(pos_x + larg_buraco, pos_y + alt_buraco, 0);
+             glTexCoord2f(0.0f, 1.0f);glVertex3f(pos_x               , pos_y + alt_buraco, 0);
             glEnd();
 
             salvaPosicao(pos_x, pos_y, larg_buraco, alt_buraco, ctr);
@@ -107,75 +180,37 @@ int buracoAcertado(GLfloat x, GLfloat y)
     return -1;
 }
 
-void objetoAcertado(int buraco)
+void geradorDeDigletts()
 {
-    int i;
+    int i,j;
+    int aux, anti_loop_eterno = 0;
 
-    for(i = 0; i < qtd_objetos; i++)
-    {
-        if (objetos_pos[i] == buraco)
-        {
-            pontos += qtd_buracos * qtd_objetos;
-            AlocaObjetos();
+    posicao_digletts = (int *)malloc(sizeof(int) * qtd_digletts);
 
-            if (aux && (pontos > qtd_buracos * qtd_objetos * 10))
-            {
-                qtd_buracos = (qtd_buracos == 81) ? 81 : pow(sqrt(qtd_buracos) + 1, 2);
-                qtd_objetos = (qtd_objetos == 10) ? 10 : qtd_objetos+1;
-
+    for ( i = 0; i < qtd_digletts; i++ ){
+        aux = (int)rand()%qtd_buracos;
+        for( j = 0 ; j < i ; j++ )
+            if( aux == posicao_digletts[j] ){
+                aux = -1;
+                break;
             }
-        }
-    }
-    glutPostRedisplay();
-}
+        if( aux != -1 )
+            posicao_digletts[i] = aux;
+        else
+            i--;
 
-void AlocaObjetos()
-{
-    int i;
+        anti_loop_eterno++;
 
-    objetos_pos = (int *)malloc(sizeof(int) * qtd_objetos);
-
-    for (i = 0; i < qtd_objetos; i++)
-        objetos_pos[i] = (int)rand()%qtd_buracos;
-}
-
-int ContemObjeto(int buraco)
-{
-    int i, j;
-
-    for (i = 0; i < qtd_buracos; i++)
-    {
-        for (j = 0; j < qtd_objetos; j++)
-        {
-            if (objetos_pos[j] == i) return 1;
+        if( anti_loop_eterno > 5000 ){
+            printf("Nem a Coração De Ouro conseguiria algo tao improvavel, voce nao merece esse jogo. Adeus!");
+            getchar();
+            exit(1);
         }
     }
 
-    return 0;
-}
+    for (i = 0; i < qtd_digletts; i++ )
+        printf("Buraco com digletts : %d\n", posicao_digletts[i]);
 
-void DesenhaObjeto()
-{
-    int i;
-
-    desloc_x = larg_buraco/7;
-    desloc_y = alt_buraco/7;
-
-    for (i = 0; i < qtd_buracos; i++)
-    {
-        glPushMatrix();
-        glColor3f(0.5, 0, 0);
-
-        glTranslatef(buracos_pos[i][0] + desloc_x, buracos_pos[i][2] + desloc_y, 0);
-        glScalef(0.7, 0.7, 0.7);
-        glBegin(GL_QUADS);
-        glVertex2f(0, 0);
-        glVertex2f(larg_buraco, 0);
-        glVertex2f(larg_buraco, alt_buraco);
-        glVertex2f(0, alt_buraco);
-        glEnd();
-        glPopMatrix();
-    }
 }
 
 void DesenhaMartelo()
@@ -184,32 +219,39 @@ void DesenhaMartelo()
     glTranslatef(new_x, new_y, 0);
     glRotatef(martelo_angulo, 0, 0, 1);
 
-    glBegin(GL_QUADS);
-    glColor3f(0.545f, 0.271f, 0.075f);
-    glVertex2f(-larg_buraco/10, -alt_buraco/3);
-    glVertex2f( larg_buraco/2 , -alt_buraco/3);
-    glVertex2f( larg_buraco/2 ,  alt_buraco/3);
-    glVertex2f(-larg_buraco/10,  alt_buraco/3);
-    glEnd();
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture ( GL_TEXTURE_2D, texture_id[5] );
 
     glBegin(GL_QUADS);
-    glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
-    glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
-    glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco);
-    glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco);
+        glTexCoord2f(0.0f, 0.0f);glVertex2f(-larg_buraco/10, -alt_buraco/3);
+        glTexCoord2f(1.0f, 0.0f);glVertex2f( larg_buraco/2 , -alt_buraco/3);
+        glTexCoord2f(1.0f, 1.0f);glVertex2f( larg_buraco/2 ,  alt_buraco/3);
+        glTexCoord2f(0.0f, 1.0f);glVertex2f(-larg_buraco/10,  alt_buraco/3);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    glBegin(GL_QUADS);
+    glColor3f(0.5f, 0.5f, 0.5f);
+        glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
+        glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco/3);
+        glVertex2f( larg_buraco/10  +   larg_buraco/5, -alt_buraco);
+        glVertex2f(-larg_buraco/10  +   larg_buraco/5, -alt_buraco);
     glEnd();
     glPopMatrix();
+
 }
 
 void DesenhaPontos()
 {
+
+    glColor3f(1, 1, 1);
     int i, qtd = (pontos == 0) ? 1: floor(log10(abs(pontos)))+1;
     char *string = "Pontos", pts[qtd];
     sprintf(pts, "%d", pontos);
 
     glPushMatrix();
-    glTranslatef(dir, cimag-6, 0);
-    glScalef(0.07, 0.05, 0.1);
+    glTranslatef(dir + 5, cimag-6, 0);
+    glScalef(0.05, 0.03, 0.1);
     glLineWidth(2);
 
 	while(*string)
@@ -218,37 +260,67 @@ void DesenhaPontos()
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(dir, cimag-12, 0);
+    glTranslatef(dir + 10, cimag-14, 0);
     glScalef(0.07, 0.05, 0.1);
 
     for (i = 0; i < qtd; i++)
-    glutStrokeCharacter(GLUT_STROKE_ROMAN, pts[i]);
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, pts[i]);
 
     glPopMatrix();
     glutSwapBuffers();
 }
 
-void Desenha(void)
+void Desenha()
 {
     glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture ( GL_TEXTURE_2D, texture_id[0]);
 
     glBegin(GL_QUADS);
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(esq, base);
-    glVertex2f(dir, base);
-    glVertex2f(dir, cima);
-    glVertex2f(esq, cima);
+    //glColor3f(0.0f, 0.0f, 0.0f);
+        glTexCoord2f(0.0f, 0.0f);glVertex2f(esq, base);
+        glTexCoord2f(1.0f, 0.0f);glVertex2f(dir, base);
+        glTexCoord2f(1.0f, 1.0f);glVertex2f(dir, cima);
+        glTexCoord2f(0.0f, 1.0f);glVertex2f(esq, cima);
     glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture ( GL_TEXTURE_2D, texture_id[4]);
+
+    glBegin(GL_QUADS);
+    //glColor3f(0.0f, 0.0f, 0.0f);
+        glTexCoord2f(0.0f, 0.0f);glVertex2f(70, 30);
+        glTexCoord2f(1.0f, 0.0f);glVertex2f(100, 30);
+        glTexCoord2f(1.0f, 1.0f);glVertex2f(100, 50);
+        glTexCoord2f(0.0f, 1.0f);glVertex2f(70, 50);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
 
     DesenhaPontos();
     CalculaBuracos();
-    //AlocaObjetos();
-    DesenhaObjeto();
     DesenhaMartelo();
+
     glFlush();
+    //glutSwapBuffers();
+}
+
+void AnimaDigletts(int value)
+{
+    textura_animacao_diglett = value;
+    Desenha();
+    glFlush();
+
+    /*Gambiarra, consertar quando definir regras de jogo*/
+    if(value == 2){
+    geradorDeDigletts();
+    glutTimerFunc(500,AnimaDigletts, 3);}
+    else
+    glutTimerFunc(500,AnimaDigletts, 2);
 }
 
 void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
@@ -264,8 +336,48 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
     glMatrixMode(GL_PROJECTION);
     gluOrtho2D (e, d, b, c);
 
-    AlocaObjetos();
     srand(time(NULL));
+
+    /*Habilita a transparencia*/
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable ( GL_TEXTURE_2D );
+    glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
+    glGenTextures ( 5, texture_id );
+
+    glBindTexture ( GL_TEXTURE_2D, texture_id[0] );
+    CarregadorDeTextura ( "textures/lawn_1024.raw", 1024,1024, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[1] );
+    CarregadorDeTextura ( "textures/lawn_hole_128.raw", 128, 128, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[2] );
+    CarregadorDeTextura ( "textures/diglett_getting_out_128.raw", 128, 128, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[3] );
+    CarregadorDeTextura ( "textures/diglett_outside_128.raw", 128, 128, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[4] );
+    CarregadorDeTextura ( "textures/board_512x256.raw", 512, 256, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[5] );
+    CarregadorDeTextura ( "textures/marreta_128_512.raw", 122, 50, 3, GL_RGB, GL_NEAREST );
+
+    geradorDeDigletts();
+
+
+    if( SDL_Init(SDL_INIT_AUDIO ) < 0 ){
+       printf( "Erro ao inicializar SDL! -> %s\n", SDL_GetError() );
+    }
+
+    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 ){
+       printf( "Erro ao inicializar SDL_Mixer! -> %s\n", Mix_GetError() );
+    }
+
+     music = Mix_LoadMUS("sounds/music/Sia Remix - musica de exemplo.mp3");
+     diglett_sound = Mix_LoadWAV("sounds/wav/diglett.wav");
+
+     /*Volume varia entre 0 e 128*/
+     Mix_VolumeMusic(64);
+     Mix_FadeInMusic(music, -1, 2000);
+
+
 }
 
 void ReiniciaJogo(int opcao)
@@ -274,19 +386,19 @@ void ReiniciaJogo(int opcao)
     {
         case 0:
             qtd_buracos = 4;
-            qtd_objetos = 1;
+            qtd_digletts = 1;
             break;
         case 1:
             qtd_buracos = 9;
-            qtd_objetos = 2;
+            qtd_digletts = 2;
             break;
         case 2:
             qtd_buracos = 16;
-            qtd_objetos = 3;
+            qtd_digletts = 3;
             break;
         case 3:
             qtd_buracos = 25;
-            qtd_objetos = 4;
+            qtd_digletts = 4;
             aux = 1;
     }
 
@@ -297,7 +409,7 @@ void ReiniciaJogo(int opcao)
 void GerenciaMouse(int button, int state, int x, int y)
 {
     GLfloat x_aux, y_aux;
-    int pos, hit;
+    int pos,i;
 
     if (button == GLUT_LEFT_BUTTON)
     {
@@ -310,8 +422,16 @@ void GerenciaMouse(int button, int state, int x, int y)
             new_y = cimag - (y_aux * (cimag - base))/altura;
 
             pos = buracoAcertado(new_x, new_y);
-            objetoAcertado(pos);
+
+            for (i = 0 ; i < qtd_digletts; i++){
+                if(pos == posicao_digletts[i]){
+                    posicao_digletts[i] = -1;
+                    pontos++;
+                    Mix_PlayChannel( -1, diglett_sound, 0 );}
+            }
+
             martelo_angulo = 90;
+
         }
     }
 
@@ -365,16 +485,23 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     gluOrtho2D (esq, dirg, base, cimag);
 }
 
-int main(void)
+int main(int argc, char* argv[])
 {
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
     glutInitWindowSize(largura, altura);
-    glutCreateWindow("");
+    glutCreateWindow("Diglett WAR! Computacao Grafica - Daniel e Daniele");
+
     glutDisplayFunc(Desenha);
     glutReshapeFunc(AlteraTamanhoJanela);
     glutKeyboardFunc(Teclado);
+
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
+    glutTimerFunc(1000, AnimaDigletts, 2);
+
     Inicializa(esq, dirg, base, cimag);
+
     glutMainLoop();
+
+    return 0;
 }
