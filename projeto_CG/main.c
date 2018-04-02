@@ -9,6 +9,7 @@
 
 
 #define PI 3.1415926535898
+#define NUMERO_DE_TEXTURAS 8
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
@@ -29,8 +30,8 @@ GLfloat esq     = 0.0f,
 
 int pontos = 0;
 int aux = 0;
-int qtd_buracos = 16;
-int qtd_digletts = 4;
+int qtd_buracos = 25;
+int qtd_digletts = 8;
 GLfloat martelo_angulo;
 GLfloat new_x, new_y;
 
@@ -38,12 +39,14 @@ GLfloat largura = 700,
         altura  = 500;
 
 
-GLuint texture_id[7]; //armazena referencia as texturas
+GLuint texture_id[NUMERO_DE_TEXTURAS]; //armazena referencia as texturas
 
 int textura_animacao_diglett = 0; //de acordo com o valor desta variavel, seleciona textura do diglett
+int hit = -1;
 
 Mix_Music *music = NULL; //- música de fundo
 Mix_Chunk *diglett_sound = NULL; // efeito sonoro do diglett
+Mix_Chunk *diglett_out_sound = NULL; //efeito de saida do buraco
 
 
 void CarregadorDeTextura ( char *file_name, int width, int height, int depth,GLenum colour_type, GLenum filter_type ){
@@ -123,7 +126,6 @@ void CalculaBuracos()
 
     qtdx_aux        = raizi;
 
-
     for (i = 0; i < qtdy_aux; i++)
     {
         if (i == qtdy_aux - 1)
@@ -142,13 +144,15 @@ void CalculaBuracos()
             int aux;
             for (aux = 0 ; aux < qtd_digletts; aux++){
                 if(posicao == posicao_digletts[aux]){
-                        if(textura_animacao_diglett == 2)
+                        if(posicao == hit)
+                            glBindTexture ( GL_TEXTURE_2D, texture_id[5]);
+                        else if(textura_animacao_diglett == 2)
                             glBindTexture ( GL_TEXTURE_2D, texture_id[2]);
                         else
                             glBindTexture ( GL_TEXTURE_2D, texture_id[3]);
                     break;
                 }
-                else // buranco sem topeira
+                else
                     glBindTexture ( GL_TEXTURE_2D, texture_id[1]);
             }
 
@@ -164,7 +168,7 @@ void CalculaBuracos()
             ctr++;
         }
     }
-}
+ }
 
 int buracoAcertado(GLfloat x, GLfloat y)
 {
@@ -209,7 +213,7 @@ void geradorDeDigletts()
     }
 
     for (i = 0; i < qtd_digletts; i++ )
-        printf("Buraco com digletts : %d\n", posicao_digletts[i]);
+        printf("Buraco com diglett : %d\n", posicao_digletts[i]);
 
 }
 
@@ -220,7 +224,7 @@ void DesenhaMartelo()
     glRotatef(martelo_angulo, 0, 0, 1);
 
     glEnable(GL_TEXTURE_2D);
-    glBindTexture ( GL_TEXTURE_2D, texture_id[5] );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[6] );
 
     glBegin(GL_QUADS);
         glTexCoord2f(0.0f, 0.0f);glVertex2f(-larg_buraco/10, -alt_buraco/3);
@@ -260,7 +264,15 @@ void DesenhaPontos()
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(dir + 10, cimag-14, 0);
+
+    short deslocamento = 12;
+
+    if(pontos >= 10 && pontos < 100)
+        deslocamento = 10;
+    else if (pontos >= 100)
+        deslocamento = 7;
+
+    glTranslatef(dir + deslocamento, cimag-14, 0);
     glScalef(0.07, 0.05, 0.1);
 
     for (i = 0; i < qtd; i++)
@@ -315,10 +327,13 @@ void AnimaDigletts(int value)
     Desenha();
     glFlush();
 
+    hit = -1; //para remover textura de hit ao sortear novos digletts
+
     /*Gambiarra, consertar quando definir regras de jogo*/
     if(value == 2){
     geradorDeDigletts();
-    glutTimerFunc(500,AnimaDigletts, 3);}
+    glutTimerFunc(500,AnimaDigletts, 3);
+    Mix_PlayChannel( -1, diglett_out_sound, 0 );} //som de saida de digletts
     else
     glutTimerFunc(500,AnimaDigletts, 2);
 }
@@ -344,7 +359,7 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
 
     glEnable ( GL_TEXTURE_2D );
     glPixelStorei ( GL_UNPACK_ALIGNMENT, 1 );
-    glGenTextures ( 5, texture_id );
+    glGenTextures ( 7, texture_id );
 
     glBindTexture ( GL_TEXTURE_2D, texture_id[0] );
     CarregadorDeTextura ( "textures/lawn_1024.raw", 1024,1024, 3, GL_RGB, GL_NEAREST );
@@ -357,6 +372,8 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
     glBindTexture ( GL_TEXTURE_2D, texture_id[4] );
     CarregadorDeTextura ( "textures/board_512x256.raw", 512, 256, 3, GL_RGB, GL_NEAREST );
     glBindTexture ( GL_TEXTURE_2D, texture_id[5] );
+    CarregadorDeTextura ( "textures/diglett_smash_128.raw", 128, 128, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[6] );
     CarregadorDeTextura ( "textures/marreta_128_512.raw", 122, 50, 3, GL_RGB, GL_NEAREST );
 
     geradorDeDigletts();
@@ -370,11 +387,14 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
        printf( "Erro ao inicializar SDL_Mixer! -> %s\n", Mix_GetError() );
     }
 
-     music = Mix_LoadMUS("sounds/music/Sia Remix - musica de exemplo.mp3");
-     diglett_sound = Mix_LoadWAV("sounds/wav/diglett.wav");
+     music = Mix_LoadMUS("sounds/music/pokemon.mp3");
+     diglett_out_sound = Mix_LoadWAV("sounds/wav/diglett_out.wav");
+     diglett_sound = Mix_LoadWAV("sounds/wav/diglett_smash.wav");
 
      /*Volume varia entre 0 e 128*/
-     Mix_VolumeMusic(64);
+     Mix_VolumeMusic(15);
+     Mix_VolumeChunk(diglett_sound,MIX_MAX_VOLUME);
+     Mix_VolumeChunk(diglett_out_sound,MIX_MAX_VOLUME/2);
      Mix_FadeInMusic(music, -1, 2000);
 
 
@@ -402,7 +422,7 @@ void ReiniciaJogo(int opcao)
             aux = 1;
     }
 
-    Inicializa(0, 0, 0, 0);
+    //Inicializa(0, 0, 0, 0);
     glutPostRedisplay();
 }
 
@@ -425,7 +445,8 @@ void GerenciaMouse(int button, int state, int x, int y)
 
             for (i = 0 ; i < qtd_digletts; i++){
                 if(pos == posicao_digletts[i]){
-                    posicao_digletts[i] = -1;
+                    //posicao_digletts[i] = -1;
+                    hit = pos;
                     pontos++;
                     Mix_PlayChannel( -1, diglett_sound, 0 );}
             }
@@ -497,7 +518,7 @@ int main(int argc, char* argv[])
 
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
-    glutTimerFunc(1000, AnimaDigletts, 2);
+    glutTimerFunc(500, AnimaDigletts, 2);
 
     Inicializa(esq, dirg, base, cimag);
 
