@@ -28,6 +28,7 @@ GLfloat esq     = 0.0f,
         cima    = 50.0f;
 
 int pontos = 0;
+int aux = 0;
 int audio_troll = 0;
 int qtd_buracos = 25;
 int qtd_digletts = 8;
@@ -47,6 +48,7 @@ short acertos_consecutivos = 0;
 short bonus_pontos_dobrados = 0;
 short bonus_desacelera = 0;
 short tempo_animacao = 200;
+short ultima_posicao = -1;
 short pausa = 0;
 
 Mix_Music *music = NULL; //- música de fundo
@@ -481,19 +483,23 @@ void ReiniciaJogo(int opcao)
         case 0:
             qtd_buracos = 4;
             qtd_digletts = 1;
+            aux = 0;
             break;
         case 1:
             qtd_buracos = 9;
             qtd_digletts = 2;
+            aux = 0;
             break;
         case 2:
             qtd_buracos = 16;
             qtd_digletts = 3;
+            aux = 0;
             break;
         case 3:
             qtd_buracos = 25;
             qtd_digletts = 4;
             audio_troll = 1;
+            aux = 1;
     }
 
     //Inicializa(0, 0, 0, 0);
@@ -522,14 +528,20 @@ void GerenciaMouse(int button, int state, int x, int y)
                 if(pos_clicada == posicao_digletts[i]){
                     if(pos_clicada != hit)
                     {
-                        if (bonus_pontos_dobrados) pontos += 2;
-                        else pontos++;
+                        if (pos_clicada != ultima_posicao)
+                        {
+                            ultima_posicao = pos_clicada;
+                            if (bonus_pontos_dobrados) pontos += 2;
+                            else pontos++;
+
+                            if(aux && (pontos > qtd_buracos * 5)) qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
+                        }
                     }
                     hit = pos_clicada;
                     acertou_diglett = 1;
                     erros_consecutivos = 0;
                     acertos_consecutivos++;
-                    Mix_PlayChannel( -1, diglett_sound, 0 );}
+                    Mix_PlayChannel(-1, diglett_sound, 0 );}
             }
 
             /*Verifica se jogador clicou em buraco sem diglett*/
