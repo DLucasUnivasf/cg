@@ -7,13 +7,15 @@
 	<GL/glut.h>
 	"ConfiguracoesGerais.h"
 
-1522442172 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
+1522758968 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
+	<SDL.h>
 	<math.h>
 	<stdlib.h>
 	<windows.h>
 	<time.h>
-	<math.h>
 	<GL/glut.h>
+	<stdio.h>
+	<SDL_mixer.h>
 
 1522440949 source:c:\users\danie\desktop\projetos\cg\projeto_cg\configuracoesgerais.c
 	"ConfiguracoesGerais.h"

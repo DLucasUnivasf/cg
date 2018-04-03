@@ -43,6 +43,10 @@ GLuint texture_id[NUMERO_DE_TEXTURAS]; //armazena referencia as texturas
 int textura_animacao_diglett = 0; //de acordo com o valor desta variavel, seleciona textura do diglett
 short hit = -1; //flag que sinaliza quando diglett e atingido
 short erros_consecutivos = 0;
+short acertos_consecutivos = 0;
+short bonus_pontos_dobrados = 0;
+short bonus_desacelera = 0;
+short tempo_animacao = 200;
 short pausa = 0;
 
 Mix_Music *music = NULL; //- música de fundo
@@ -390,10 +394,10 @@ void AnimaDigletts(int value)
         /*Gambiarra, consertar quando definir regras de jogo*/
         if(value == 2){
         geradorDeDigletts();
-        glutTimerFunc(300,AnimaDigletts, 3);
+        glutTimerFunc(tempo_animacao, AnimaDigletts, 3);
         Mix_PlayChannel( -1, diglett_out_sound, 0 );} //som de saida de digletts
         else
-        glutTimerFunc(300,AnimaDigletts, 2);
+        glutTimerFunc(tempo_animacao, AnimaDigletts, 2);
     }
 }
 
@@ -517,10 +521,14 @@ void GerenciaMouse(int button, int state, int x, int y)
             for (i = 0 ; i < qtd_digletts; i++){
                 if(pos_clicada == posicao_digletts[i]){
                     if(pos_clicada != hit)
-                        pontos++;
+                    {
+                        if (bonus_pontos_dobrados) pontos += 2;
+                        else pontos++;
+                    }
                     hit = pos_clicada;
                     acertou_diglett = 1;
                     erros_consecutivos = 0;
+                    acertos_consecutivos++;
                     Mix_PlayChannel( -1, diglett_sound, 0 );}
             }
 
@@ -530,6 +538,10 @@ void GerenciaMouse(int button, int state, int x, int y)
                     pontos--;
                     erros_consecutivos++;
             }
+
+            if (acertos_consecutivos == 10) bonus_pontos_dobrados = 1;
+            if (acertos_consecutivos == 15) if (bonus_desacelera) tempo_animacao = 200;
+            if (acertos_consecutivos == 20) bonus_desacelera = 1;
 
             martelo_angulo = 90;
 
@@ -580,6 +592,11 @@ void Teclado(unsigned char key, int x, int y)
             pausa = 0;
             AnimaDigletts(2);}
     }
+    if (key == 82 || key == 114)
+    {
+        Inicializa(0, 0, 0, 0);
+        glutPostRedisplay();
+    }
     if (key == 77 || key == 109){
             printf("here");
 
@@ -594,6 +611,20 @@ void Teclado(unsigned char key, int x, int y)
             Mix_VolumeMusic(MIX_MAX_VOLUME/16);
         }
     }
+}
+
+void TeclasEspeciais(unsigned char key, int x, int y)
+{
+    if (key == GLUT_KEY_F1)
+        if (bonus_pontos_dobrados == 1) bonus_pontos_dobrados = 0;
+
+    if (key == GLUT_KEY_F2)
+    {
+        if (bonus_desacelera == 1) bonus_desacelera = 0;
+        acertos_consecutivos = 0;
+        tempo_animacao = 300;
+    }
+    glutPostRedisplay();
 }
 
 void AlteraTamanhoJanela(GLsizei w, GLsizei h)
@@ -620,6 +651,7 @@ int main(int argc, char* argv[])
     glutDisplayFunc(Desenha);
     glutReshapeFunc(AlteraTamanhoJanela);
     glutKeyboardFunc(Teclado);
+    glutSpecialFunc(TeclasEspeciais);
 
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
