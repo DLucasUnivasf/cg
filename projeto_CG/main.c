@@ -8,7 +8,7 @@
 #include <SDL_mixer.h>
 
 
-#define NUMERO_DE_TEXTURAS 8
+#define NUMERO_DE_TEXTURAS 10
 
 GLfloat r_buraco, g_buraco, b_buraco;
 GLfloat **buracos_pos;
@@ -28,7 +28,7 @@ GLfloat esq     = 0.0f,
         cima    = 50.0f;
 
 int pontos = 0;
-int aux = 0;
+int audio_troll = 0;
 int qtd_buracos = 25;
 int qtd_digletts = 8;
 GLfloat martelo_angulo;
@@ -143,9 +143,9 @@ void CalculaBuracos()
 
             int posicao = i * raizi + j;
 
-            int aux;
-            for (aux = 0 ; aux < qtd_digletts; aux++){
-                if(posicao == posicao_digletts[aux]){
+            int audio_troll;
+            for (audio_troll = 0 ; audio_troll < qtd_digletts; audio_troll++){
+                if(posicao == posicao_digletts[audio_troll]){
                         if(posicao == hit)
                             glBindTexture ( GL_TEXTURE_2D, texture_id[5]);
                         else if(textura_animacao_diglett == 2)
@@ -197,7 +197,7 @@ void geradorDeDigletts()
     if(total_t >= 2000){
         hit = -1;
         int i,j;
-        int aux, anti_loop_eterno = 0;
+        int audio_troll, anti_loop_eterno = 0;
         /*Vetor auxiliar para evitar que digletts sejam colocados no mesmo buraco consecutivamente*/
         int* aux_posicao_digletts = (int *)malloc(sizeof(int) * qtd_digletts);
 
@@ -206,15 +206,15 @@ void geradorDeDigletts()
         }
 
         for ( i = 0; i < qtd_digletts; i++ ){
-            aux = (int)rand()%qtd_buracos;
+            audio_troll = (int)rand()%qtd_buracos;
 
             for(j = 0 ; j < qtd_digletts ; j++)
-                if (aux == posicao_digletts[j] || aux == aux_posicao_digletts[j]){
-                    aux = -1;
+                if (audio_troll == posicao_digletts[j] || audio_troll == aux_posicao_digletts[j]){
+                    audio_troll = -1;
                     break;}
 
-            if( aux != -1 )
-                posicao_digletts[i] = aux;
+            if( audio_troll != -1 )
+                posicao_digletts[i] = audio_troll;
             else
                 i--;
 
@@ -297,9 +297,18 @@ void DesenhaPontos()
     glutSwapBuffers();
 }
 
+void DesenhaCard(){
+        glBegin(GL_QUADS);
+            glTexCoord2f(0.0f, 0.0f);glVertex2f(70, 0);
+            glTexCoord2f(1.0f, 0.0f);glVertex2f(100, 0);
+            glTexCoord2f(1.0f, 1.0f);glVertex2f(100, 20);
+            glTexCoord2f(0.0f, 1.0f);glVertex2f(70, 20);
+        glEnd();
+}
+
 void DesenhaPainelLateral()
 {
-    static short aux = 1;
+    static short audio_troll = 1, hunter_master = 1;
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture ( GL_TEXTURE_2D, texture_id[4]);
@@ -313,22 +322,31 @@ void DesenhaPainelLateral()
     glDisable(GL_TEXTURE_2D);
 
     if (erros_consecutivos >= 5){
-        if(aux){
+        if(audio_troll){
             Mix_PlayChannel( -1, not_effective, 0 );
-            aux = 0;}
+            audio_troll = 0;}
         glEnable(GL_TEXTURE_2D);
         glBindTexture ( GL_TEXTURE_2D, texture_id[7]);
-
-        glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f);glVertex2f(70, 0);
-            glTexCoord2f(1.0f, 0.0f);glVertex2f(100, 0);
-            glTexCoord2f(1.0f, 1.0f);glVertex2f(100, 20);
-            glTexCoord2f(0.0f, 1.0f);glVertex2f(70, 20);
-        glEnd();
+        DesenhaCard();
     }
+
+    if (pontos >= 100 && hunter_master < 150){
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture ( GL_TEXTURE_2D, texture_id[8]);
+        DesenhaCard();
+        hunter_master++;
+    }
+
+    if(pausa){
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture ( GL_TEXTURE_2D, texture_id[9]);
+        DesenhaCard();
+    }
+
 }
 
-void DesenhaTelaPrincipal(){
+void DesenhaTelaPrincipal()
+{
 
     glEnable(GL_TEXTURE_2D);
     glBindTexture ( GL_TEXTURE_2D, texture_id[0]);
@@ -340,26 +358,6 @@ void DesenhaTelaPrincipal(){
         glTexCoord2f(0.0f, 1.0f);glVertex2f(esq, cima);
     glEnd();
     glDisable(GL_TEXTURE_2D);
-
-    if(pausa){
-            printf("Here!");
-        glBegin(GL_QUADS);
-        glColor4f(0,0,0,1);
-            glVertex2f(40, 20);
-            glVertex2f(50, 20);
-            glVertex2f(50, 40);
-            glVertex2f(40, 40);
-        glEnd();
-
-        glBegin(GL_QUADS);
-            glColor4f(0,0,0,1);
-            glVertex2f(20, 20);
-            glVertex2f(30, 20);
-            glVertex2f(30, 40);
-            glVertex2f(20, 40);
-        glEnd();
-    }
-
 
 }
 
@@ -442,6 +440,10 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
     CarregadorDeTextura ( "textures/marreta_128_512.raw", 122, 50, 3, GL_RGB, GL_NEAREST );
     glBindTexture ( GL_TEXTURE_2D, texture_id[7] );
     CarregadorDeTextura ( "textures/not_effective_256.raw", 256, 256, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[8] );
+    CarregadorDeTextura ( "textures/digllet_hunter_master_256.raw", 256, 256, 3, GL_RGB, GL_NEAREST );
+    glBindTexture ( GL_TEXTURE_2D, texture_id[9] );
+    CarregadorDeTextura ( "textures/paused_256.raw", 256, 256, 3, GL_RGB, GL_NEAREST );
 
     geradorDeDigletts();
 
@@ -487,7 +489,7 @@ void ReiniciaJogo(int opcao)
         case 3:
             qtd_buracos = 25;
             qtd_digletts = 4;
-            aux = 1;
+            audio_troll = 1;
     }
 
     //Inicializa(0, 0, 0, 0);
@@ -565,7 +567,7 @@ void PosicaoMouse(int x, int y)
 
 void Teclado(unsigned char key, int x, int y)
 {
-    static mute = 0;
+    static int mute = 0;
 
     if (key == 27)
         exit(0);
