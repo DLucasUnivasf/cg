@@ -528,10 +528,13 @@ void GerenciaMouse(int button, int state, int x, int y)
                             if (bonus_pontos_dobrados) pontos += 2;
                             else pontos++;
 
+                            printf("acertos: %d\n", acertos_consecutivos);
+
                             if(pontos > qtd_buracos * 5)
                             {
+                                printf("pontos: %d\n", pontos);
                                 qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
-                                qtd_diglets = (qtd_digletts == 4)  ?   4 : qtd_digletts + 1;
+                                qtd_digletts = (qtd_digletts == 4)  ?   4 : qtd_digletts + 1;
                             }
                         }
                     }
