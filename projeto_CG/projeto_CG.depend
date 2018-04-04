@@ -1,11 +1,13 @@
 # depslib dependency file v1.0
-1522455330 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\main.c
+1522804804 source:c:\users\juju-\desktop\projetos\cg\projeto_cg\main.c
+	<SDL.h>
 	<math.h>
 	<stdlib.h>
 	<windows.h>
 	<time.h>
 	<GL/glut.h>
-	"ConfiguracoesGerais.h"
+	<stdio.h>
+	<SDL_mixer.h>
 
 1522758968 source:c:\users\danie\desktop\projetos\cg\projeto_cg\main.c
 	<SDL.h>

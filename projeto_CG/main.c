@@ -28,16 +28,14 @@ GLfloat esq     = 0.0f,
         cima    = 50.0f;
 
 int pontos = 0;
-int aux = 0;
 int audio_troll = 0;
 int qtd_buracos = 25;
-int qtd_digletts = 8;
+int qtd_digletts = 4;
 GLfloat martelo_angulo;
 GLfloat new_x, new_y;
 
 GLfloat largura = 700,
         altura  = 500;
-
 
 GLuint texture_id[NUMERO_DE_TEXTURAS]; //armazena referencia as texturas
 
@@ -483,23 +481,19 @@ void ReiniciaJogo(int opcao)
         case 0:
             qtd_buracos = 4;
             qtd_digletts = 1;
-            aux = 0;
             break;
         case 1:
             qtd_buracos = 9;
             qtd_digletts = 2;
-            aux = 0;
             break;
         case 2:
             qtd_buracos = 16;
             qtd_digletts = 3;
-            aux = 0;
             break;
         case 3:
             qtd_buracos = 25;
             qtd_digletts = 4;
             audio_troll = 1;
-            aux = 1;
     }
 
     //Inicializa(0, 0, 0, 0);
@@ -534,7 +528,11 @@ void GerenciaMouse(int button, int state, int x, int y)
                             if (bonus_pontos_dobrados) pontos += 2;
                             else pontos++;
 
-                            if(aux && (pontos > qtd_buracos * 5)) qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
+                            if(pontos > qtd_buracos * 5)
+                            {
+                                qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
+                                qtd_diglets = (qtd_digletts == 4)  ?   4 : qtd_digletts + 1;
+                            }
                         }
                     }
                     hit = pos_clicada;
@@ -552,7 +550,7 @@ void GerenciaMouse(int button, int state, int x, int y)
             }
 
             if (acertos_consecutivos == 10) bonus_pontos_dobrados = 1;
-            if (acertos_consecutivos == 15) if (bonus_desacelera) tempo_animacao = 200;
+            if ((acertos_consecutivos == 15) && bonus_desacelera) tempo_animacao = 200;
             if (acertos_consecutivos == 20) bonus_desacelera = 1;
 
             martelo_angulo = 90;
@@ -606,7 +604,9 @@ void Teclado(unsigned char key, int x, int y)
     }
     if (key == 82 || key == 114)
     {
-        Inicializa(0, 0, 0, 0);
+        pontos = 0;
+        erros_consecutivos = 0;
+        acertos_consecutivos = 0;
         glutPostRedisplay();
     }
     if (key == 77 || key == 109){
@@ -667,7 +667,7 @@ int main(int argc, char* argv[])
 
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
-    glutTimerFunc(500, AnimaDigletts, 2);
+    glutTimerFunc(tempo_animacao, AnimaDigletts, 2);
 
     Inicializa(esq, dirg, base, cimag);
 
