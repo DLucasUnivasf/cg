@@ -34,8 +34,9 @@ int qtd_digletts = 4;
 GLfloat martelo_angulo;
 GLfloat new_x, new_y;
 
-GLfloat largura = 700,
+GLfloat largura = 800,
         altura  = 500;
+
 
 GLuint texture_id[NUMERO_DE_TEXTURAS]; //armazena referencia as texturas
 
@@ -43,19 +44,21 @@ int textura_animacao_diglett = 0; //de acordo com o valor desta variavel, seleci
 short hit = -1; //flag que sinaliza quando diglett e atingido
 short erros_consecutivos = 0;
 short acertos_consecutivos = 0;
-short bonus_pontos_dobrados = 0;
-short bonus_desacelera = 0;
-short tempo_animacao = 200;
-short ultima_posicao = -1;
+short bonus_pontos_dobrados = -1;
+short bonus_desacelera = -1;
+short tempo_default = 200;
+short novo_tempo = 300;
+short tempo_animacao;
+short acerto_passado = 0;
 short pausa = 0;
 
-Mix_Music *music = NULL; //- m˙sica de fundo
+Mix_Music *music = NULL; //- m√∫sica de fundo
 Mix_Chunk *diglett_sound = NULL; // efeito sonoro do diglett
 Mix_Chunk *diglett_out_sound = NULL; //efeito de saida do buraco
 Mix_Chunk *not_effective = NULL; //efeito de saida do buraco
 
 
-void CarregadorDeTextura ( char *file_name, int width, int height, int depth,GLenum colour_type, GLenum filter_type ){
+void CarregadorDeTextura ( char *file_name, int width, int height, int depth, GLenum colour_type, GLenum filter_type ){
 
 /*
 Carrega textura de arquivo no formato RAW.
@@ -65,14 +68,15 @@ Carrega textura de arquivo no formato RAW.
     FILE *file;
 
     if (( file = fopen(file_name, "rb"))==NULL ){
-        printf ( "Arquivo de textura n„o Encontrado : %s\n", file_name );
+        printf ( "Arquivo de textura nÔøΩo Encontrado : %s\n", file_name );
         exit ( 1 );
     }
+    tempo_animacao = tempo_default;
 
     raw_bitmap = (GLubyte *)malloc(width * height * depth * (sizeof(GLubyte)));
 
     if ( raw_bitmap == NULL ){
-        printf ( "Nao foi possivel alocar espaÁo de memÛria para a textura\n" );
+        printf ( "Nao foi possivel alocar espaÔøΩo de memÔøΩria para a textura\n" );
         fclose ( file );
         exit ( 1 );
     }
@@ -85,7 +89,7 @@ Carrega textura de arquivo no formato RAW.
     glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter_type );
     // Define o ambiente de Textura
     glTexEnvf ( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-    // ConstruÁ„o dos MipMaps
+    // ConstruÔøΩÔøΩo dos MipMaps
     gluBuild2DMipmaps ( GL_TEXTURE_2D, colour_type, width, height, colour_type,
     GL_UNSIGNED_BYTE, raw_bitmap );
     // Libera a memoria alocada para o array
@@ -225,7 +229,7 @@ void geradorDeDigletts()
             anti_loop_eterno++;
 
             if( anti_loop_eterno > 5000 ){
-                printf("Nem a CoraÁ„o De Ouro conseguiria algo tao improvavel, voce nao merece esse jogo. Adeus!");
+                printf("Nem a CoraÔøΩÔøΩo De Ouro conseguiria algo tao improvavel, voce nao merece esse jogo. Adeus!");
                 getchar();
                 exit(1);
             }
@@ -269,11 +273,19 @@ void DesenhaPontos()
 
     glColor3f(1, 1, 1);
     int i, qtd = (pontos == 0) ? 1: floor(log10(abs(pontos)))+1;
-    char *string = "Pontos", pts[qtd];
+    char *string = "Pontos", *info[6], pts[qtd];
+    short desloc = 21;
     sprintf(pts, "%d", pontos);
 
+    info[0] = "M mute";
+    info[1] = "R reiniciar";
+    info[2] = "P pause";
+    info[3] = "ESC sair";
+    info[4] = "F1 Pts dobrados";
+    info[5] = "F2 Slow";
+
     glPushMatrix();
-    glTranslatef(dir + 5, cimag-6, 0);
+    glTranslatef(dir + 5, cimag - 6, 0);
     glScalef(0.05, 0.03, 0.1);
     glLineWidth(2);
 
@@ -291,22 +303,37 @@ void DesenhaPontos()
     else if (pontos >= 100)
         deslocamento = 7;
 
-    glTranslatef(dir + deslocamento, cimag-14, 0);
+    glTranslatef(dir + deslocamento, cimag-12, 0);
     glScalef(0.07, 0.05, 0.1);
 
     for (i = 0; i < qtd; i++)
         glutStrokeCharacter(GLUT_STROKE_ROMAN, pts[i]);
 
     glPopMatrix();
+
+    for (i = 0; i < 6; i++)
+    {
+        glPushMatrix();
+
+        glTranslatef(dir + 1.5, cimag - desloc, 0);
+        glScalef(0.025, 0.03, 0.08);
+
+        while(*info[i])
+		glutStrokeCharacter(GLUT_STROKE_ROMAN, *info[i]++);
+
+        glPopMatrix();
+        desloc += 5;
+    }
+
     glutSwapBuffers();
 }
 
 void DesenhaCard(){
         glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f);glVertex2f(70, 0);
-            glTexCoord2f(1.0f, 0.0f);glVertex2f(100, 0);
-            glTexCoord2f(1.0f, 1.0f);glVertex2f(100, 20);
-            glTexCoord2f(0.0f, 1.0f);glVertex2f(70, 20);
+            glTexCoord2f(0.0f, 0.0f);glVertex2f(dir, base);
+            glTexCoord2f(1.0f, 0.0f);glVertex2f(dirg, base);
+            glTexCoord2f(1.0f, 1.0f);glVertex2f(dirg, base + 20);
+            glTexCoord2f(0.0f, 1.0f);glVertex2f(dir, base + 20);
         glEnd();
 }
 
@@ -318,12 +345,25 @@ void DesenhaPainelLateral()
     glBindTexture ( GL_TEXTURE_2D, texture_id[4]);
 
     glBegin(GL_QUADS);
-        glTexCoord2f(0.0f, 0.0f);glVertex2f(70, 30);
-        glTexCoord2f(1.0f, 0.0f);glVertex2f(100, 30);
-        glTexCoord2f(1.0f, 1.0f);glVertex2f(100, 50);
-        glTexCoord2f(0.0f, 1.0f);glVertex2f(70, 50);
+        glTexCoord2f(0.0f, 0.0f);glVertex2f(dir, cimag - 15);
+        glTexCoord2f(1.0f, 0.0f);glVertex2f(dirg, cimag - 15);
+        glTexCoord2f(1.0f, 1.0f);glVertex2f(dirg, cimag);
+        glTexCoord2f(0.0f, 1.0f);glVertex2f(dir, cimag);
     glEnd();
     glDisable(GL_TEXTURE_2D);
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture ( GL_TEXTURE_2D, texture_id[4]);
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);glVertex2f(dir, base);
+        glTexCoord2f(1.0f, 0.0f);glVertex2f(dirg, base);
+        glTexCoord2f(1.0f, 1.0f);glVertex2f(dirg, cimag - 15);
+        glTexCoord2f(0.0f, 1.0f);glVertex2f(dir, cimag - 15);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+
+    DesenhaPontos();
 
     if (erros_consecutivos >= 5){
         if(audio_troll){
@@ -351,7 +391,6 @@ void DesenhaPainelLateral()
 
 void DesenhaTelaPrincipal()
 {
-
     glEnable(GL_TEXTURE_2D);
     glBindTexture ( GL_TEXTURE_2D, texture_id[0]);
 
@@ -373,12 +412,9 @@ void Desenha()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     DesenhaTelaPrincipal();
-    DesenhaPainelLateral();
-    DesenhaPontos();
     CalculaBuracos();
+    DesenhaPainelLateral();
     DesenhaMartelo();
-
-
     glFlush();
     //glutSwapBuffers();
 }
@@ -481,18 +517,26 @@ void ReiniciaJogo(int opcao)
         case 0:
             qtd_buracos = 4;
             qtd_digletts = 1;
+            acertos_consecutivos = 0;
+            pontos = 0;
             break;
         case 1:
             qtd_buracos = 9;
             qtd_digletts = 2;
+            acertos_consecutivos = 0;
+            pontos = 0;
             break;
         case 2:
             qtd_buracos = 16;
             qtd_digletts = 3;
+            acertos_consecutivos = 0;
+            pontos = 0;
             break;
         case 3:
             qtd_buracos = 25;
             qtd_digletts = 4;
+            acertos_consecutivos = 0;
+            pontos = 0;
             audio_troll = 1;
     }
 
@@ -520,30 +564,25 @@ void GerenciaMouse(int button, int state, int x, int y)
 
             for (i = 0 ; i < qtd_digletts; i++){
                 if(pos_clicada == posicao_digletts[i]){
+
                     if(pos_clicada != hit)
                     {
-                        if (pos_clicada != ultima_posicao)
+                        if (bonus_pontos_dobrados == 1) pontos += 2;
+                        else pontos++;
+
+                        if(pontos > qtd_buracos * 5)
                         {
-                            ultima_posicao = pos_clicada;
-                            if (bonus_pontos_dobrados) pontos += 2;
-                            else pontos++;
-
-                            printf("acertos: %d\n", acertos_consecutivos);
-
-                            if(pontos > qtd_buracos * 5)
-                            {
-                                printf("pontos: %d\n", pontos);
-                                qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
-                                qtd_digletts = (qtd_digletts == 4)  ?   4 : qtd_digletts + 1;
-                            }
+                            qtd_buracos = (qtd_buracos == 144) ? 144 : pow(sqrt(qtd_buracos) + 1, 2);
+                            qtd_digletts = (qtd_digletts == 4)  ?   4 : qtd_digletts + 1;
                         }
+
                     }
                     hit = pos_clicada;
                     acertou_diglett = 1;
                     erros_consecutivos = 0;
-                    acertos_consecutivos++;
-                    Mix_PlayChannel(-1, diglett_sound, 0 );}
-            }
+                    Mix_PlayChannel( -1, diglett_sound, 0 );
+                    }
+                }
 
             /*Verifica se jogador clicou em buraco sem diglett*/
             if(!acertou_diglett && pos_clicada != -1){
@@ -551,13 +590,26 @@ void GerenciaMouse(int button, int state, int x, int y)
                     pontos--;
                     erros_consecutivos++;
             }
+            if (acertou_diglett)
+            {
+                if (acerto_passado) acertos_consecutivos++;
+                acerto_passado = 1;
+            }
+            else
+            {
+                acerto_passado = 0;
+                acertos_consecutivos = 0;
+                bonus_pontos_dobrados = -1;
+                bonus_desacelera = -1;
+                tempo_animacao = tempo_default;
+            }
 
-            if (acertos_consecutivos == 10) bonus_pontos_dobrados = 1;
-            if ((acertos_consecutivos == 15) && bonus_desacelera) tempo_animacao = 200;
-            if (acertos_consecutivos == 20) bonus_desacelera = 1;
+            if (acertos_consecutivos == 10) bonus_pontos_dobrados = 0;
+            if ((acertos_consecutivos == 15) && bonus_pontos_dobrados) bonus_pontos_dobrados = -1;
+            if (acertos_consecutivos == 20) bonus_desacelera = 0;
+            if ((acertos_consecutivos == 25) && bonus_desacelera) bonus_desacelera = -1;
 
             martelo_angulo = 90;
-
         }
     }
 
@@ -566,10 +618,10 @@ void GerenciaMouse(int button, int state, int x, int y)
         if (state == GLUT_DOWN)
         {
             glutCreateMenu(ReiniciaJogo);
-            glutAddMenuEntry("F·cil", 0);
-            glutAddMenuEntry("Intermedi·rio", 1);
-            glutAddMenuEntry("DifÌcil", 2);
-            glutAddMenuEntry("AvanÁado", 3);
+            glutAddMenuEntry("F√°cil", 0);
+            glutAddMenuEntry("Intermedi√°rio", 1);
+            glutAddMenuEntry("Dif√≠cil", 2);
+            glutAddMenuEntry("Avan√ßado", 3);
 
             glutAttachMenu(GLUT_RIGHT_BUTTON);
         }
@@ -605,13 +657,16 @@ void Teclado(unsigned char key, int x, int y)
             pausa = 0;
             AnimaDigletts(2);}
     }
+
     if (key == 82 || key == 114)
     {
         pontos = 0;
         erros_consecutivos = 0;
         acertos_consecutivos = 0;
-        glutPostRedisplay();
+        tempo_animacao = novo_tempo;
+        Desenha();
     }
+
     if (key == 77 || key == 109){
             printf("here");
 
@@ -630,14 +685,12 @@ void Teclado(unsigned char key, int x, int y)
 
 void TeclasEspeciais(unsigned char key, int x, int y)
 {
-    if (key == GLUT_KEY_F1)
-        if (bonus_pontos_dobrados == 1) bonus_pontos_dobrados = 0;
+    if (key == GLUT_KEY_F1) if (bonus_pontos_dobrados == 0) bonus_pontos_dobrados = 1;
 
     if (key == GLUT_KEY_F2)
     {
-        if (bonus_desacelera == 1) bonus_desacelera = 0;
-        acertos_consecutivos = 0;
-        tempo_animacao = 300;
+        if (bonus_desacelera == 0) bonus_desacelera = 1;
+        tempo_animacao = novo_tempo;
     }
     glutPostRedisplay();
 }
@@ -670,7 +723,7 @@ int main(int argc, char* argv[])
 
     glutPassiveMotionFunc(PosicaoMouse);
     glutMouseFunc(GerenciaMouse);
-    glutTimerFunc(tempo_animacao, AnimaDigletts, 2);
+    glutTimerFunc(500, AnimaDigletts, 2);
 
     Inicializa(esq, dirg, base, cimag);
 
