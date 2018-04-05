@@ -108,7 +108,7 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
      Mix_VolumeChunk(diglett_sound,MIX_MAX_VOLUME);
      Mix_VolumeChunk(not_effective,MIX_MAX_VOLUME/4);
      Mix_VolumeChunk(diglett_out_sound,MIX_MAX_VOLUME/2);
-     Mix_FadeInMusic(music, -1, 2000);
+     Mix_FadeInMusic(music, -1, 2000)
 }
 
 void ReiniciaJogo(int opcao)
@@ -203,17 +203,22 @@ void GerenciaMouse(int button, int state, int x, int y)
                 bonus_desacelera = -1;
                 r_bonus1 = g_bonus1 = b_bonus1 = r_bonus2 = g_bonus2 = b_bonus2 = 1;
                 tempo_animacao = tempo_default;
+                tempo_animacao2 = tempo_default2;
             }
 
-            if (acertos_consecutivos == 10)
+            if (acertos_consecutivos == 10 && bonus_pontos_dobrados == -1)
             {
                 bonus_pontos_dobrados = 0;
-                r_bonus1 = g_bonus1 = b_bonus1 = 0.6;
+                r_bonus1 = 0.196;
+                g_bonus1 = 0.804;
+                b_bonus1 = 0.196;
             }
-            if (acertos_consecutivos == 20)
+            if (acertos_consecutivos == 20 && bonus_desacelera == -1)
             {
                 bonus_desacelera = 0;
-                r_bonus2 = g_bonus2 = b_bonus2 = 0.6;
+                r_bonus2 = 0.196;
+                g_bonus2 = 0.804;
+                b_bonus2 = 0.196;
             }
 
             martelo_angulo = 90;
@@ -225,10 +230,10 @@ void GerenciaMouse(int button, int state, int x, int y)
         if (state == GLUT_DOWN)
         {
             glutCreateMenu(ReiniciaJogo);
-            glutAddMenuEntry("Fácil", 0);
-            glutAddMenuEntry("Intermediário", 1);
-            glutAddMenuEntry("Difícil", 2);
-            glutAddMenuEntry("Avançado", 3);
+            glutAddMenuEntry("Facil", 0);
+            glutAddMenuEntry("Intermediario", 1);
+            glutAddMenuEntry("Dificil", 2);
+            glutAddMenuEntry("Avancado", 3);
 
             glutAttachMenu(GLUT_RIGHT_BUTTON);
         }
@@ -297,10 +302,12 @@ void TeclasEspeciais(unsigned char key, int x, int y)
         if (bonus_pontos_dobrados == 0)
         {
             bonus_pontos_dobrados = 1;
-            r_bonus1 = g_bonus1 = b_bonus1 = 1;
-            acertos_consecutivos -= 10;
-            if (acertos_consecutivos < 10) r_bonus1 = g_bonus1 = b_bonus1 = 1;
-            if (acertos_consecutivos < 20) r_bonus2 = g_bonus2 = b_bonus2 = 1;
+            bonus_desacelera = -1;
+            r_bonus1 = 0.118;
+            g_bonus1 = 0.565;
+            b_bonus1 = 1;
+            acertos_consecutivos = 0;
+            if (b_bonus2 != 1) r_bonus2 = g_bonus2 = b_bonus2 = 1;
         }
     }
 
@@ -309,11 +316,14 @@ void TeclasEspeciais(unsigned char key, int x, int y)
         if (bonus_desacelera == 0)
         {
             bonus_desacelera = 1;
-            r_bonus2 = g_bonus2 = b_bonus2 = 1;
+            bonus_pontos_dobrados = -1;
+            r_bonus2 = 0.118;
+            g_bonus2 = 0.565;
+            b_bonus2 = 1;
             tempo_animacao = novo_tempo;
-            acertos_consecutivos -= 20;
-            if (acertos_consecutivos < 10) r_bonus1 = g_bonus1 = b_bonus1 = 1;
-            if (acertos_consecutivos < 20) r_bonus2 = g_bonus2 = b_bonus2 = 1;
+            tempo_animacao2 = novo_tempo2;
+            acertos_consecutivos = 0;
+            if (b_bonus1 != 1) r_bonus1 = g_bonus1 = b_bonus1 = 1;
         }
     }
     glutPostRedisplay();

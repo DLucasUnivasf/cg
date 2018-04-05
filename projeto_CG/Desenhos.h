@@ -1,6 +1,6 @@
 #ifndef DESENHOS_H_INCLUDED
 #define DESENHOS_H_INCLUDED
-#include "ConfigsGerais.h"
+#include "ConfigGerais.h"
 
 void DesenhaMartelo();
 void DesenhaPontos();

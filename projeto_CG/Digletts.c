@@ -35,7 +35,7 @@ void geradorDeDigletts()
             anti_loop_eterno++;
 
             if( anti_loop_eterno > 5000 ){
-                printf("Nem a Cora��o De Ouro conseguiria algo tao improvavel, voce nao merece esse jogo. Adeus!");
+                printf("Nem a Coração De Ouro conseguiria algo tao improvavel, voce nao merece esse jogo. Adeus!");
                 getchar();
                 exit(1);
             }
@@ -56,9 +56,9 @@ void AnimaDigletts(int value)
 
         if(value == 2){
         geradorDeDigletts();
-        glutTimerFunc(500, AnimaDigletts, 3);
+        glutTimerFunc(tempo_animacao2, AnimaDigletts, 3);
         Mix_PlayChannel( -1, diglett_out_sound, 0 );} //som de saida de digletts
         else
-        glutTimerFunc(500, AnimaDigletts, 2);
+        glutTimerFunc(tempo_animacao2, AnimaDigletts, 2);
     }
 }

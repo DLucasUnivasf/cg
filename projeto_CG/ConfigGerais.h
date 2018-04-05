@@ -56,7 +56,10 @@ short bonus_pontos_dobrados = -1;
 short bonus_desacelera = -1;
 short tempo_default = 1500;
 short novo_tempo = 2000;
-short tempo_animacao;
+short tempo_default2 = 300;
+short novo_tempo2 = 500;
+short tempo_animacao = 1500;
+short tempo_animacao2 = 300;
 short acerto_passado = 0;
 short pausa = 0;
 

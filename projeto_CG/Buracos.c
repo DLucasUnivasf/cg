@@ -70,7 +70,6 @@ void CalculaBuracos()
             }
 
              glBegin(GL_POLYGON);
-             //glColor4f(1, 1, 1,1);
              glTexCoord2f(0.0f, 0.0f);glVertex3f(pos_x               , pos_y             , 0);
              glTexCoord2f(1.0f, 0.0f); glVertex3f(pos_x + larg_buraco, pos_y             , 0);
              glTexCoord2f(1.0f, 1.0f); glVertex3f(pos_x + larg_buraco, pos_y + alt_buraco, 0);
