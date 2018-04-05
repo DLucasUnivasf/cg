@@ -108,7 +108,7 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
      Mix_VolumeChunk(diglett_sound,MIX_MAX_VOLUME);
      Mix_VolumeChunk(not_effective,MIX_MAX_VOLUME/4);
      Mix_VolumeChunk(diglett_out_sound,MIX_MAX_VOLUME/2);
-     Mix_FadeInMusic(music, -1, 2000)
+     Mix_FadeInMusic(music, -1, 2000);
 }
 
 void ReiniciaJogo(int opcao)
