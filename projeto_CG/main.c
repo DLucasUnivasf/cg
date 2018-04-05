@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <SDL_mixer.h>
 
-
 #define NUMERO_DE_TEXTURAS 10
 
 GLfloat r_buraco, g_buraco, b_buraco;
@@ -37,6 +36,13 @@ GLfloat new_x, new_y;
 GLfloat largura = 800,
         altura  = 500;
 
+GLfloat r_bonus1 = 1,
+        g_bonus1 = 1,
+        b_bonus1 = 1,
+        r_bonus2 = 1,
+        g_bonus2 = 1,
+        b_bonus2 = 1;
+
 
 GLuint texture_id[NUMERO_DE_TEXTURAS]; //armazena referencia as texturas
 
@@ -46,8 +52,8 @@ short erros_consecutivos = 0;
 short acertos_consecutivos = 0;
 short bonus_pontos_dobrados = -1;
 short bonus_desacelera = -1;
-short tempo_default = 200;
-short novo_tempo = 300;
+short tempo_default = 1500;
+short novo_tempo = 2000;
 short tempo_animacao;
 short acerto_passado = 0;
 short pausa = 0;
@@ -201,8 +207,8 @@ void geradorDeDigletts()
     cham_atual_t = clock();
     total_t = (double)(cham_atual_t - ult_chamada_t) / (CLOCKS_PER_SEC/1000);
     /*Em ms*/
-
-    if(total_t >= 2000){
+    printf("tempo_animacao: %d\n", tempo_animacao);
+    if(total_t >= tempo_animacao){
         hit = -1;
         int i,j;
         int audio_troll, anti_loop_eterno = 0;
@@ -289,8 +295,8 @@ void DesenhaPontos()
     glScalef(0.05, 0.03, 0.1);
     glLineWidth(2);
 
-	while(*string)
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, *string++);
+    while(*string)
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, *string++);
 
     glPopMatrix();
 
@@ -311,7 +317,7 @@ void DesenhaPontos()
 
     glPopMatrix();
 
-    for (i = 0; i < 6; i++)
+    for (i = 0; i < 4; i++)
     {
         glPushMatrix();
 
@@ -319,11 +325,29 @@ void DesenhaPontos()
         glScalef(0.025, 0.03, 0.08);
 
         while(*info[i])
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, *info[i]++);
+        glutStrokeCharacter(GLUT_STROKE_ROMAN, *info[i]++);
 
         glPopMatrix();
         desloc += 5;
     }
+
+    glPushMatrix();
+    glColor3f(r_bonus1, g_bonus1, b_bonus1);
+    glTranslatef(dir + 1.5, cimag - desloc, 0);
+    glScalef(0.025, 0.03, 0.08);
+    while(*info[4])
+    glutStrokeCharacter(GLUT_STROKE_ROMAN, *info[4]++);
+    glPopMatrix();
+    desloc += 5;
+
+    glPushMatrix();
+    glColor3f(r_bonus2, g_bonus2, b_bonus2);
+    glTranslatef(dir + 1.5, cimag - desloc, 0);
+    glScalef(0.025, 0.03, 0.08);
+    while(*info[5])
+    glutStrokeCharacter(GLUT_STROKE_ROMAN, *info[5]++);
+    glPopMatrix();
+    desloc += 5;
 
     glutSwapBuffers();
 }
@@ -367,7 +391,7 @@ void DesenhaPainelLateral()
 
     if (erros_consecutivos >= 5){
         if(audio_troll){
-            Mix_PlayChannel( -1, not_effective, 0 );
+            //Mix_PlayChannel( -1, not_effective, 0 );
             audio_troll = 0;}
         glEnable(GL_TEXTURE_2D);
         glBindTexture ( GL_TEXTURE_2D, texture_id[7]);
@@ -407,7 +431,7 @@ void DesenhaTelaPrincipal()
 void Desenha()
 {
     glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+    glLoadIdentity();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -427,13 +451,12 @@ void AnimaDigletts(int value)
         Desenha();
         glFlush();
 
-        /*Gambiarra, consertar quando definir regras de jogo*/
         if(value == 2){
         geradorDeDigletts();
-        glutTimerFunc(tempo_animacao, AnimaDigletts, 3);
+        glutTimerFunc(500, AnimaDigletts, 3);
         Mix_PlayChannel( -1, diglett_out_sound, 0 );} //som de saida de digletts
         else
-        glutTimerFunc(tempo_animacao, AnimaDigletts, 2);
+        glutTimerFunc(500, AnimaDigletts, 2);
     }
 }
 
@@ -507,7 +530,6 @@ void Inicializa(GLfloat e, GLfloat d, GLfloat b, GLfloat c)
      Mix_VolumeChunk(not_effective,MIX_MAX_VOLUME/4);
      Mix_VolumeChunk(diglett_out_sound,MIX_MAX_VOLUME/2);
      Mix_FadeInMusic(music, -1, 2000);
-
 }
 
 void ReiniciaJogo(int opcao)
@@ -549,6 +571,8 @@ void GerenciaMouse(int button, int state, int x, int y)
     GLfloat x_aux, y_aux;
     int pos_clicada,i;
     short acertou_diglett = 0;
+
+    printf("acertos: %d\n", acertos_consecutivos);
 
     if (button == GLUT_LEFT_BUTTON && !pausa)
     {
@@ -601,13 +625,20 @@ void GerenciaMouse(int button, int state, int x, int y)
                 acertos_consecutivos = 0;
                 bonus_pontos_dobrados = -1;
                 bonus_desacelera = -1;
+                r_bonus1 = g_bonus1 = b_bonus1 = r_bonus2 = g_bonus2 = b_bonus2 = 1;
                 tempo_animacao = tempo_default;
             }
 
-            if (acertos_consecutivos == 10) bonus_pontos_dobrados = 0;
-            if ((acertos_consecutivos == 15) && bonus_pontos_dobrados) bonus_pontos_dobrados = -1;
-            if (acertos_consecutivos == 20) bonus_desacelera = 0;
-            if ((acertos_consecutivos == 25) && bonus_desacelera) bonus_desacelera = -1;
+            if (acertos_consecutivos == 10)
+            {
+                bonus_pontos_dobrados = 0;
+                r_bonus1 = g_bonus1 = b_bonus1 = 0.6;
+            }
+            if (acertos_consecutivos == 20)
+            {
+                bonus_desacelera = 0;
+                r_bonus2 = g_bonus2 = b_bonus2 = 0.6;
+            }
 
             martelo_angulo = 90;
         }
@@ -663,7 +694,7 @@ void Teclado(unsigned char key, int x, int y)
         pontos = 0;
         erros_consecutivos = 0;
         acertos_consecutivos = 0;
-        tempo_animacao = novo_tempo;
+        tempo_animacao = tempo_default;
         Desenha();
     }
 
@@ -685,12 +716,29 @@ void Teclado(unsigned char key, int x, int y)
 
 void TeclasEspeciais(unsigned char key, int x, int y)
 {
-    if (key == GLUT_KEY_F1) if (bonus_pontos_dobrados == 0) bonus_pontos_dobrados = 1;
+    if (key == GLUT_KEY_F1)
+    {
+        if (bonus_pontos_dobrados == 0)
+        {
+            bonus_pontos_dobrados = 1;
+            r_bonus1 = g_bonus1 = b_bonus1 = 1;
+            acertos_consecutivos -= 10;
+            if (acertos_consecutivos < 10) r_bonus1 = g_bonus1 = b_bonus1 = 1;
+            if (acertos_consecutivos < 20) r_bonus2 = g_bonus2 = b_bonus2 = 1;
+        }
+    }
 
     if (key == GLUT_KEY_F2)
     {
-        if (bonus_desacelera == 0) bonus_desacelera = 1;
-        tempo_animacao = novo_tempo;
+        if (bonus_desacelera == 0)
+        {
+            bonus_desacelera = 1;
+            r_bonus2 = g_bonus2 = b_bonus2 = 1;
+            tempo_animacao = novo_tempo;
+            acertos_consecutivos -= 20;
+            if (acertos_consecutivos < 10) r_bonus1 = g_bonus1 = b_bonus1 = 1;
+            if (acertos_consecutivos < 20) r_bonus2 = g_bonus2 = b_bonus2 = 1;
+        }
     }
     glutPostRedisplay();
 }
@@ -705,7 +753,7 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     altura = h;
 
     glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
+    glLoadIdentity();
 
     gluOrtho2D (esq, dirg, base, cimag);
 }
